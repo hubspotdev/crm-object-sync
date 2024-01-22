@@ -1,22 +1,38 @@
 {
-  "name": "crm-object-sync",
+  "name": "crm_object_sync",
   "version": "1.0.0",
-  "description": "CRM Object Sync examples for Project Management use cases",
+  "description": "Getting started with syncing associations between records",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/app.ts"
+    "dev": "nodemon src/app.ts",
+    "prod": "node dist/app.js",
+    "build": "tsc",
+    "init": "nodemon src/init.ts",
+    "seed": "npx prisma db seed",
+    "db-init": "npx prisma db push",
+    "dev-server": "nodemon src/test-server.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.11.5",
-    "express": "^4.18.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "@hubspot/cli-lib": "^4.1.14",
+    "@ngrok/ngrok": "^0.5.2",
+    "@prisma/client": "^4.15.0",
+    "axios": "^1.4.0",
+    "dotenv": "^16.1.4",
+    "express": "^4.17.1",
+    "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "@faker-js/faker": "^8.0.2",
+    "@hubspot/api-client": "^8.9.0",
+    "@types/express": "^4.17.11",
+    "@types/node": "^14.18.48",
+    "@types/prompts": "^2.4.4",
+    "nodemon": "^2.0.7",
+    "prettier": "^2.8.8",
+    "prisma": "^4.15.0",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.1.3"
   }
 }

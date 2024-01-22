@@ -1,0 +1,37 @@
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Contacts {
+  id Int @id @default(autoincrement())
+  email String  @unique
+  first_name    String?
+  last_name     String?
+  hs_object_id  String
+
+  @@index([hs_object_id])
+}
+
+model Companies {
+id Int @id @default(autoincrement())
+domain  String? 
+name String?
+hs_object_id String
+
+@@index([hs_object_id])
+
+}
+
+model Authorization {
+  customerId   String    @id @db.VarChar(255)
+  hsPortalId   String    @db.VarChar(255)
+  accessToken  String    @db.VarChar(255)
+  refreshToken String    @db.VarChar(255)
+  expiresIn    Int?
+  expiresAt    DateTime? @db.Timestamp(6)
+}
