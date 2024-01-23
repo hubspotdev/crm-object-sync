@@ -8,7 +8,7 @@ const prisma = new PrismaClient()
 const app: Application = express()
 
 
-app.get('/toto', async (req: Request, res: Response) => {
+app.get('/contacts', async (req: Request, res: Response) => {
     const prisma = new PrismaClient()
     const contacts = await prisma.contacts.findMany({})
         res.send(contacts)
@@ -34,6 +34,37 @@ app.get('/toto', async (req: Request, res: Response) => {
         }
       });
 
+
+
+
+      app.post("/addcontacts", async (req, res) => {
+        try{
+            const {id, email, first_name, last_name, hs_object_id } = req.body
+
+            const newContact = await prisma.contacts.create({
+                data: {
+                    id,
+                    email,
+                    first_name, 
+                    last_name,
+                    hs_object_id 
+                }
+            })
+        res.json(newContact)
+         } catch (error:any) {
+            console.log("broken")
+            res.status(500).json({
+                message: "Internal Server Error",
+            })
+         }
+      })
+
+
+
+
+
 app.listen(PORT, function () {
     console.log('App is listening on port ${port}')
 })
+
+

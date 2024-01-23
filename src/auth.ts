@@ -23,7 +23,7 @@ const SCOPES = [
   "crm.schemas.contacts.write",
   "crm.schemas.companies.read",
   "crm.schemas.contacts.read",
-  "rahmona.henry"
+
 ];
 
 const EXCHANGE_CONSTANTS = {
