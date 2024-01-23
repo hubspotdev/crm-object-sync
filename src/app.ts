@@ -6,6 +6,8 @@ import { PORT, getCustomerId } from "./utils";
 
 const prisma = new PrismaClient()
 const app: Application = express()
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 
 app.get('/contacts', async (req: Request, res: Response) => {
@@ -39,20 +41,21 @@ app.get('/contacts', async (req: Request, res: Response) => {
 
       app.post("/addcontacts", async (req, res) => {
         try{
-            const {id, email, first_name, last_name, hs_object_id } = req.body
+            const {id, email, first_name, last_name, hs_object_id} = req.body
 
             const newContact = await prisma.contacts.create({
                 data: {
                     id,
                     email,
-                    first_name, 
+                    first_name,
                     last_name,
-                    hs_object_id 
+                    hs_object_id
                 }
             })
         res.json(newContact)
-         } catch (error:any) {
-            console.log("broken")
+         }
+          catch (error:any) {
+            console.log(error.message)
             res.status(500).json({
                 message: "Internal Server Error",
             })
