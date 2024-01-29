@@ -10,7 +10,8 @@
     "init": "nodemon src/init.ts",
     "seed": "npx prisma db seed",
     "db-init": "npx prisma db push",
-    "dev-server": "nodemon src/test-server.ts"
+    "dev-server": "nodemon src/test-server.ts",
+    "ts-node": "ts-node --compiler-options '{\"module\": \"CommonJS\"}'"
   },
   "author": "",
   "license": "ISC",

@@ -39,28 +39,28 @@ app.get('/contacts', async (req: Request, res: Response) => {
 
 
 
-      app.post("/addcontacts", async (req, res) => {
-        try{
-            const {id, email, first_name, last_name, hs_object_id} = req.body
+      // app.post("/addcontacts", async (req, res) => {
+      //   try{
+      //       const {id, email, first_name, last_name, hs_object_id} = req.body
 
-            const newContact = await prisma.contacts.create({
-                data: {
-                    id,
-                    email,
-                    first_name,
-                    last_name,
-                    hs_object_id
-                }
-            })
-        res.json(newContact)
-         }
-          catch (error:any) {
-            console.log(error.message)
-            res.status(500).json({
-                message: "Internal Server Error",
-            })
-         }
-      })
+      //       const newContact = await prisma.contacts.create({
+      //           data: {
+      //               id,
+      //               email,
+      //               first_name,
+      //               last_name,
+      //               hs_object_id
+      //           }
+      //       })
+      //   res.json(newContact)
+      //    }
+      //     catch (error:any) {
+      //       console.log(error.message)
+      //       res.status(500).json({
+      //           message: "Internal Server Error",
+      //       })
+      //    }
+      // })
 
 
 
