@@ -1,30 +1,29 @@
-datasource db {
-  provider = "postgresql"
-  url = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 model Contacts {
-  id Int @id @default(autoincrement())
-  email String  @unique
-  first_name    String?
-  last_name     String?
-  hs_object_id  String
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
+  first_name   String?
+  last_name    String?
+  hs_object_id String?
 
   @@index([hs_object_id])
 }
 
 model Companies {
-id Int @id @default(autoincrement())
-domain  String? 
-name String?
-hs_object_id String
+  id           Int     @id @default(autoincrement())
+  domain       String?
+  name         String?
+  hs_object_id String
 
-@@index([hs_object_id])
-
+  @@index([hs_object_id])
 }
 
 model Authorization {

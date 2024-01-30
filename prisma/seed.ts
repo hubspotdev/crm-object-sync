@@ -1,25 +1,35 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import {faker} from '@faker-js/faker';
+import { PrismaClient } from "@prisma/client";
+
+
+/*Create dataset, mapping over an array*/
+
+const data = Array.from({ length:100 }).map(() => ({
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    email: faker.internet.email(),
+
+}));
 
 const prisma = new PrismaClient();
 
-async function main() {
-    await prisma.contacts.create({
-        data: {
-           first_name: "Jurgen",
-           last_name: "Klopp", 
-           email: "jklopp@liverpool.com",
-           hs_object_id: "202751"
-        }
-    })
-    console.log("seeding");
+/*Run seed command and the function below inserts data in the database*/
 
+async function main(){
+    await prisma.contacts.createMany({
+        data
+    });
 }
+
 main()
-.catch(e => {
-    console.error(e);
-    process.exit(1);
+.catch((e) => {
+    console.log(e);
+    process.exit(1)
 })
-.finally(async () => {
-    await prisma.$disconnect();
-});
+.finally(() => {
+    prisma.$disconnect();
+})
+ 
+
+
 
