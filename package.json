@@ -12,7 +12,10 @@
     "db-init": "npx prisma db push",
     "dev-server": "nodemon src/test-server.ts",
     "prisma-studio": "npx prisma studio",
-    "migrate": "npx prisma migrate dev"
+    "migrate": "npx prisma migrate dev",
+    "ts-node": "ts-node --compiler-options '{\"module\": \"CommonJS\"}'",
+    "lint": "npx eslint",
+    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write"
   },
   "author": "",
   "license": "ISC",
@@ -32,12 +35,14 @@
     "@types/node": "^14.18.63",
     "@types/prompts": "^2.4.4",
     "nodemon": "^2.0.7",
-    "prettier": "^2.8.8",
-    "prisma": "^5.9.0",
+    "prettier": "^3.2.4",
+    "prisma": "^5.8.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "typescript": "^4.9.5",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3"
   }
 }

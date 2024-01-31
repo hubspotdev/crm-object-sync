@@ -1,7 +1,7 @@
-import "dotenv/config";
-import * as hubspot from "@hubspot/api-client";
-import { Authorization, PrismaClient} from "@prisma/client";
-import { PORT, getCustomerId } from "./utils";
+import 'dotenv/config';
+import * as hubspot from '@hubspot/api-client';
+import { Authorization, PrismaClient } from '@prisma/client';
+import { PORT, getCustomerId } from './utils';
 
 interface ExchangeProof {
   grant_type: string;
@@ -12,31 +12,30 @@ interface ExchangeProof {
   refresh_token?: string;
 }
 
-const CLIENT_ID: string = process.env.CLIENT_ID || "CLIENT_ID required";
+const CLIENT_ID: string = process.env.CLIENT_ID || 'CLIENT_ID required';
 const CLIENT_SECRET: string =
-  process.env.CLIENT_SECRET || "CLIENT_SECRET required";
+  process.env.CLIENT_SECRET || 'CLIENT_SECRET required';
 
 const REDIRECT_URI: string = `http://localhost:${PORT}/oauth-callback`;
 
 const SCOPES = [
-  "crm.schemas.companies.write",
-  "crm.schemas.contacts.write",
-  "crm.schemas.companies.read",
-  "crm.schemas.contacts.read",
-
+  'crm.schemas.companies.write',
+  'crm.schemas.contacts.write',
+  'crm.schemas.companies.read',
+  'crm.schemas.contacts.read'
 ];
 
 const EXCHANGE_CONSTANTS = {
   redirect_uri: REDIRECT_URI,
   client_id: CLIENT_ID,
-  client_secret: CLIENT_SECRET,
+  client_secret: CLIENT_SECRET
 };
 
 const hubspotClient = new hubspot.Client();
 
 const prisma = new PrismaClient();
 
-const scopeString = SCOPES.toString().replaceAll(",", " ");
+const scopeString = SCOPES.toString().replaceAll(',', ' ');
 
 const authUrl = hubspotClient.oauth.getAuthorizationUrl(
   CLIENT_ID,
@@ -54,15 +53,15 @@ const redeemCode = async (code: string): Promise<Authorization> => {
   return await exchangeForTokens({
     ...EXCHANGE_CONSTANTS,
     code,
-    grant_type: "authorization_code",
+    grant_type: 'authorization_code'
   });
 };
 
 const getHubSpotId = async (accessToken: string) => {
   hubspotClient.setAccessToken(accessToken);
   const hubspotAccountInfoResponse = await hubspotClient.apiRequest({
-    path: "/account-info/v3/details",
-    method: "GET",
+    path: '/account-info/v3/details',
+    method: 'GET'
   });
 
   const hubspotAccountInfo = await hubspotAccountInfoResponse.json();
@@ -79,7 +78,7 @@ const exchangeForTokens = async (
     client_id,
     client_secret,
     grant_type,
-    refresh_token,
+    refresh_token
   } = exchangeProof;
   const tokenResponse = await hubspotClient.oauth.tokensApi.createToken(
     grant_type,
@@ -99,14 +98,14 @@ const exchangeForTokens = async (
     const hsPortalId = await getHubSpotId(accessToken);
     const tokenInfo = await prisma.authorization.upsert({
       where: {
-        customerId: customerId,
+        customerId: customerId
       },
       update: {
         refreshToken,
         accessToken,
         expiresIn,
         expiresAt,
-        hsPortalId,
+        hsPortalId
       },
       create: {
         refreshToken,
@@ -114,8 +113,8 @@ const exchangeForTokens = async (
         expiresIn,
         expiresAt,
         hsPortalId,
-        customerId,
-      },
+        customerId
+      }
     });
 
     return tokenInfo;
@@ -134,20 +133,20 @@ const getAccessToken = async (customerId: string): Promise<string> => {
       select: {
         accessToken: true,
         expiresAt: true,
-        refreshToken: true,
+        refreshToken: true
       },
       where: {
-        customerId,
-      },
+        customerId
+      }
     })) as Authorization;
     if (currentCreds?.expiresAt && currentCreds?.expiresAt > new Date()) {
       return currentCreds?.accessToken;
     } else {
       const updatedCreds = await exchangeForTokens({
         ...EXCHANGE_CONSTANTS,
-        grant_type: "refresh_token",
+        grant_type: 'refresh_token',
 
-        refresh_token: currentCreds?.refreshToken,
+        refresh_token: currentCreds?.refreshToken
       });
       if (updatedCreds instanceof Error) {
         throw updatedCreds;
