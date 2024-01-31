@@ -9,7 +9,7 @@ datasource db {
 
 model Contacts {
   id           Int     @id @default(autoincrement())
-  email        String  @unique
+  email        String  
   first_name   String?
   last_name    String?
   hs_object_id String?
@@ -21,7 +21,7 @@ model Companies {
   id           Int     @id @default(autoincrement())
   domain       String?
   name         String?
-  hs_object_id String
+  hs_object_id String?
 
   @@index([hs_object_id])
 }
@@ -34,3 +34,4 @@ model Authorization {
   expiresIn    Int?
   expiresAt    DateTime? @db.Timestamp(6)
 }
+
