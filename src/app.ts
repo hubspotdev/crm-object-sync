@@ -4,7 +4,6 @@ import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
 
-
 const prisma = new PrismaClient();
 const app: Application = express();
 app.use(express.json());
@@ -20,14 +19,13 @@ app.get('/api/install', (req: Request, res: Response) => {
   res.send(authUrl);
 });
 
-app.get('/', async  (req: Request, res: Response) => {
-  const accessToken = await getAccessToken(getCustomerId())
+app.get('/', async (req: Request, res: Response) => {
+  const accessToken = await getAccessToken(getCustomerId());
   res.send(accessToken);
-}) 
+});
 
 app.get('/oauth-callback', async (req: Request, res: Response) => {
   const code = req.query.code;
-
 
   if (code) {
     try {
@@ -40,7 +38,6 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
   }
 });
 
-
 app.listen(PORT, function () {
-  console.log('App is listening on port ${port}');
+  console.log(`App is listening on port ${PORT}`);
 });

@@ -17,6 +17,9 @@
     "lint": "npx eslint",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
