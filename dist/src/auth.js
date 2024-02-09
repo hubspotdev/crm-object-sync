@@ -28,23 +28,23 @@ require("dotenv/config");
 const hubspot = __importStar(require("@hubspot/api-client"));
 const client_1 = require("@prisma/client");
 const utils_1 = require("./utils");
-const CLIENT_ID = process.env.CLIENT_ID || "CLIENT_ID required";
-const CLIENT_SECRET = process.env.CLIENT_SECRET || "CLIENT_SECRET required";
+const CLIENT_ID = process.env.CLIENT_ID || 'CLIENT_ID required';
+const CLIENT_SECRET = process.env.CLIENT_SECRET || 'CLIENT_SECRET required';
 const REDIRECT_URI = `http://localhost:${utils_1.PORT}/oauth-callback`;
 const SCOPES = [
-    "crm.schemas.companies.write",
-    "crm.schemas.contacts.write",
-    "crm.schemas.companies.read",
-    "crm.schemas.contacts.read",
+    'crm.schemas.companies.write',
+    'crm.schemas.contacts.write',
+    'crm.schemas.companies.read',
+    'crm.schemas.contacts.read'
 ];
 const EXCHANGE_CONSTANTS = {
     redirect_uri: REDIRECT_URI,
     client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    client_secret: CLIENT_SECRET
 };
 const hubspotClient = new hubspot.Client();
 const prisma = new client_1.PrismaClient();
-const scopeString = SCOPES.toString().replaceAll(",", " ");
+const scopeString = SCOPES.toString().replaceAll(',', ' ');
 const authUrl = hubspotClient.oauth.getAuthorizationUrl(CLIENT_ID, REDIRECT_URI, scopeString);
 exports.authUrl = authUrl;
 const getExpiresAt = (expiresIn) => {
@@ -55,22 +55,22 @@ const redeemCode = async (code) => {
     return await exchangeForTokens({
         ...EXCHANGE_CONSTANTS,
         code,
-        grant_type: "authorization_code",
+        grant_type: 'authorization_code'
     });
 };
 exports.redeemCode = redeemCode;
 const getHubSpotId = async (accessToken) => {
     hubspotClient.setAccessToken(accessToken);
     const hubspotAccountInfoResponse = await hubspotClient.apiRequest({
-        path: "/account-info/v3/details",
-        method: "GET",
+        path: '/account-info/v3/details',
+        method: 'GET'
     });
     const hubspotAccountInfo = await hubspotAccountInfoResponse.json();
     const hubSpotportalId = hubspotAccountInfo.portalId;
     return hubSpotportalId.toString();
 };
 const exchangeForTokens = async (exchangeProof) => {
-    const { code, redirect_uri, client_id, client_secret, grant_type, refresh_token, } = exchangeProof;
+    const { code, redirect_uri, client_id, client_secret, grant_type, refresh_token } = exchangeProof;
     const tokenResponse = await hubspotClient.oauth.tokensApi.createToken(grant_type, code, redirect_uri, client_id, client_secret, refresh_token);
     try {
         const accessToken = tokenResponse.accessToken;
@@ -81,14 +81,14 @@ const exchangeForTokens = async (exchangeProof) => {
         const hsPortalId = await getHubSpotId(accessToken);
         const tokenInfo = await prisma.authorization.upsert({
             where: {
-                customerId: customerId,
+                customerId: customerId
             },
             update: {
                 refreshToken,
                 accessToken,
                 expiresIn,
                 expiresAt,
-                hsPortalId,
+                hsPortalId
             },
             create: {
                 refreshToken,
@@ -96,8 +96,8 @@ const exchangeForTokens = async (exchangeProof) => {
                 expiresIn,
                 expiresAt,
                 hsPortalId,
-                customerId,
-            },
+                customerId
+            }
         });
         return tokenInfo;
     }
@@ -114,11 +114,11 @@ const getAccessToken = async (customerId) => {
             select: {
                 accessToken: true,
                 expiresAt: true,
-                refreshToken: true,
+                refreshToken: true
             },
             where: {
-                customerId,
-            },
+                customerId
+            }
         }));
         if (currentCreds?.expiresAt && currentCreds?.expiresAt > new Date()) {
             return currentCreds?.accessToken;
@@ -126,8 +126,8 @@ const getAccessToken = async (customerId) => {
         else {
             const updatedCreds = await exchangeForTokens({
                 ...EXCHANGE_CONSTANTS,
-                grant_type: "refresh_token",
-                refresh_token: currentCreds?.refreshToken,
+                grant_type: 'refresh_token',
+                refresh_token: currentCreds?.refreshToken
             });
             if (updatedCreds instanceof Error) {
                 throw updatedCreds;
