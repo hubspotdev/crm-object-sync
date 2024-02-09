@@ -17,26 +17,43 @@ app.get('/contacts', async (req, res) => {
     const contacts = await prisma.contacts.findMany({});
     res.send(contacts);
 });
-app.get('/api/install', (req, res) => {
+app.get("/api/install", (req, res) => {
     res.send(auth_1.authUrl);
 });
-app.get('/', async (req, res) => {
-    const accessToken = await (0, auth_1.getAccessToken)((0, utils_1.getCustomerId)());
-    res.send(accessToken);
-});
-app.get('/oauth-callback', async (req, res) => {
+app.get("/oauth-callback", async (req, res) => {
     const code = req.query.code;
     if (code) {
         try {
             const authInfo = await (0, auth_1.redeemCode)(code.toString());
             const accessToken = authInfo.accessToken;
-            res.redirect(`http://localhost:${utils_1.PORT}/`);
+            res.redirect(`http://localhost:${utils_1.PORT - 1}/`);
         }
         catch (error) {
             res.redirect(`/?errMessage=${error.message}`);
         }
     }
 });
+// app.post("/addcontacts", async (req, res) => {
+//   try{
+//       const {id, email, first_name, last_name, hs_object_id} = req.body
+//       const newContact = await prisma.contacts.create({
+//           data: {
+//               id,
+//               email,
+//               first_name,
+//               last_name,
+//               hs_object_id
+//           }
+//       })
+//   res.json(newContact)
+//    }
+//     catch (error:any) {
+//       console.log(error.message)
+//       res.status(500).json({
+//           message: "Internal Server Error",
+//       })
+//    }
+// })
 app.listen(utils_1.PORT, function () {
     console.log('App is listening on port ${port}');
 });

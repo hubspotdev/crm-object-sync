@@ -42,5 +42,5 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
 
 
 app.listen(PORT, function () {
-  console.log(`App is listening on port ${PORT}`);
+  console.log('App is listening on port ${port}');
 });
