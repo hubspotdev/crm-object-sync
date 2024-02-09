@@ -12,9 +12,21 @@ interface ExchangeProof {
   refresh_token?: string;
 }
 
-const CLIENT_ID: string = process.env.CLIENT_ID || 'CLIENT_ID required';
-const CLIENT_SECRET: string =
-  process.env.CLIENT_SECRET || 'CLIENT_SECRET required';
+class MissingRequiredError extends Error {
+  constructor(message: string | undefined, options: ErrorOptions | undefined) {
+    message = message + 'is missing, please add it to your .env file';
+    super(message, options);
+  }
+}
+
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+if (!CLIENT_ID) {
+  throw new MissingRequiredError('CLIENT_ID ', undefined);
+}
+if (!CLIENT_SECRET) {
+  throw new MissingRequiredError('CLIENT_SECRET ', undefined);
+}
 
 const REDIRECT_URI: string = `http://localhost:${PORT}/oauth-callback`;
 
@@ -22,7 +34,11 @@ const SCOPES = [
   'crm.schemas.companies.write',
   'crm.schemas.contacts.write',
   'crm.schemas.companies.read',
-  'crm.schemas.contacts.read'
+  'crm.schemas.contacts.read',
+  'crm.objects.companies.write',
+  'crm.objects.contacts.write',
+  'crm.objects.companies.read',
+  'crm.objects.contacts.read'
 ];
 
 const EXCHANGE_CONSTANTS = {
