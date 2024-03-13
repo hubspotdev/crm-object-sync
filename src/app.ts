@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
-
+import {initialContactsSync} from './initialSyncFromHubSpot'
 
 const prisma = new PrismaClient();
 const app: Application = express();
@@ -17,7 +17,7 @@ app.get('/contacts', async (req: Request, res: Response) => {
 });
 
 app.get('/api/install', (req: Request, res: Response) => {
-  res.send(authUrl);
+  res.send(`<html><body><a href="${authUrl}" target="blank">${authUrl}</a></body></html>`);
 });
 
 app.get('/', async  (req: Request, res: Response) => {
@@ -40,7 +40,11 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
   }
 });
 
+app.get('/intial-contacts-sync', async (req: Request, res: Response) => {
+  const syncResults = await initialContactsSync();
+  res.send(syncResults);
+})
 
 app.listen(PORT, function () {
-  console.log('App is listening on port ${port}');
+  console.log(`App is listening on port ${PORT}`);
 });
