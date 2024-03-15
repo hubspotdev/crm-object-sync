@@ -1,7 +1,8 @@
 import 'dotenv/config';
 
 import { Contacts, PrismaClient } from '@prisma/client';
-import { Client } from '@hubspot/api-client';
+import { Client as HubSpotClient,  } from '@hubspot/api-client';
+import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import { getAccessToken } from './auth';
 import { getCustomerId } from './utils';
 
@@ -17,7 +18,7 @@ const MAX_BATCH_SIZE = 100;
 const prisma = new PrismaClient();
 
 const createOrUpdateContact = async (contactData: any) => {
-  let upsertResult: object = {};
+  let upsertResult: Contacts;
   if (contactData.properties.email) {
     // Create the contact if no matching email
     // On matching email, update the HS ID but nothing else
@@ -37,8 +38,15 @@ const createOrUpdateContact = async (contactData: any) => {
     });
     console.log("individual:", upsertResult);
   } else {
-    // no email, skip contact for now
-    upsertResult = {"skippedId":contactData.id};
+    // no email, create without email
+    upsertResult = await prisma.contacts.create({
+      data: {
+        first_name: contactData.properties.firstname,
+        last_name: contactData.properties.lastname,
+        hs_object_id: contactData.id
+      }
+    });
+    console.log("individual, new created:", upsertResult);
   }
     return upsertResult;
 }
@@ -47,12 +55,12 @@ const initialContactsSync = async () => {
   console.log("started sync");
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
-  const hubspotClient = new Client({
+  const hubspotClient = new HubSpotClient({
     accessToken,
     limiterOptions: DEFAULT_LIMITER_OPTIONS
   });
   
-  const allContactsResponse = await hubspotClient.crm.contacts.getAll(
+  const allContactsResponse: SimplePublicObject[] = await hubspotClient.crm.contacts.getAll(
     MAX_BATCH_SIZE,                       // limit
     undefined,                            // after
     ['firstname', 'lastname', 'email'],   // properties
@@ -70,9 +78,12 @@ const initialContactsSync = async () => {
     upsertResults.push(createOrUpdateContactResult);
   }
 
-  console.log("all results:",upsertResults);
+  // console.log("all results:",upsertResults);
 
-  return(upsertResults);
+  return({
+    total: allContactsResponse.length,
+    results:upsertResults
+  });
 }
 
 export {initialContactsSync};
