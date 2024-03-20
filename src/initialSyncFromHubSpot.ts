@@ -1,18 +1,25 @@
 import 'dotenv/config';
 
 import { Contacts, PrismaClient } from '@prisma/client';
-import { Client as HubSpotClient,  } from '@hubspot/api-client';
+import { Client as HubSpotClient } from '@hubspot/api-client';
 import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import { getAccessToken } from './auth';
 import { getCustomerId } from './utils';
+
+// HubSpot Client arguments
+// Unused values must be undefined to avoid HubSpot client errors 
+const pageLimit: number = 100;
+let after: string;
+const propertiesToGet: string[]= ['firstname', 'lastname', 'email'];
+let propertiesToGetWithHistory: string[];
+let associationsToGet: string[];
+const getArchived: boolean = false;
 
 const DEFAULT_LIMITER_OPTIONS = {
   minTime: 1000 / 9,
   maxConcurrent: 6,
   id: 'hubspot-client-limiter'
 };
-
-const MAX_BATCH_SIZE = 100;
 
 // Avoid overloading Prisma connections
 const prisma = new PrismaClient();
@@ -60,13 +67,14 @@ const initialContactsSync = async () => {
     limiterOptions: DEFAULT_LIMITER_OPTIONS
   });
   
+  // Get contacts using client
   const allContactsResponse: SimplePublicObject[] = await hubspotClient.crm.contacts.getAll(
-    MAX_BATCH_SIZE,                       // limit
-    undefined,                            // after
-    ['firstname', 'lastname', 'email'],   // properties
-    undefined,                            // propertiesWithHistory
-    undefined,                            // associations
-    false                                 // archived
+    pageLimit,
+    after,
+    propertiesToGet,
+    propertiesToGetWithHistory,
+    associationsToGet,
+    getArchived,
   );
 
   console.log(`Found ${allContactsResponse.length} contacts`);
@@ -77,8 +85,6 @@ const initialContactsSync = async () => {
     const createOrUpdateContactResult = await createOrUpdateContact(element);
     upsertResults.push(createOrUpdateContactResult);
   }
-
-  // console.log("all results:",upsertResults);
 
   return({
     total: allContactsResponse.length,
