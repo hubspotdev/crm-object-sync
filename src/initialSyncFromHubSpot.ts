@@ -6,6 +6,11 @@ import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts
 import { getAccessToken } from './auth';
 import { getCustomerId } from './utils';
 
+type CreateUpdateUpsertResult = {
+  resultRecord: Contacts,
+  updateResult: string,
+};
+
 // HubSpot Client arguments
 // Unused values must be undefined to avoid HubSpot client errors 
 const pageLimit: number = 100;
@@ -14,6 +19,9 @@ const propertiesToGet: string[]= ['firstname', 'lastname', 'email'];
 let propertiesToGetWithHistory: string[];
 let associationsToGet: string[];
 const getArchived: boolean = false;
+
+// Use verbose (but slower) create or update functionality
+const useVerboseCreateOrUpdate: boolean = false;
 
 const DEFAULT_LIMITER_OPTIONS = {
   minTime: 1000 / 9,
@@ -24,12 +32,13 @@ const DEFAULT_LIMITER_OPTIONS = {
 // Avoid overloading Prisma connections
 const prisma = new PrismaClient();
 
-const createOrUpdateContact = async (contactData: any) => {
-  let upsertResult: Contacts;
+const upsertContact = async (contactData: SimplePublicObject) => {
+  let upsertRecord: Contacts;
+  let upsertResult: string;
   if (contactData.properties.email) {
     // Create the contact if no matching email
     // On matching email, update the HS ID but nothing else
-    upsertResult = await prisma.contacts.upsert({
+    upsertRecord = await prisma.contacts.upsert({
       where:{
         email: contactData.properties.email
       },
@@ -43,19 +52,34 @@ const createOrUpdateContact = async (contactData: any) => {
         hs_object_id: contactData.id
       }
     });
-    console.log("individual:", upsertResult);
+    upsertResult = "upsert";
   } else {
     // no email, create without email
-    upsertResult = await prisma.contacts.create({
+    upsertRecord = await prisma.contacts.create({
       data: {
         first_name: contactData.properties.firstname,
         last_name: contactData.properties.lastname,
         hs_object_id: contactData.id
       }
     });
-    console.log("individual, new created:", upsertResult);
+    upsertResult = "created";
   }
-    return upsertResult;
+    let result: CreateUpdateUpsertResult = {
+      resultRecord: upsertRecord,
+      updateResult: upsertResult
+    };
+
+    return result;
+}
+
+const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
+  let prismaRecord: Contacts;
+  let updateResult: string;
+
+  let result: CreateUpdateUpsertResult = {
+    resultRecord: prismaRecord,
+    updateResult: updateResult
+  }
 }
 
 const initialContactsSync = async () => {
@@ -79,10 +103,16 @@ const initialContactsSync = async () => {
 
   console.log(`Found ${allContactsResponse.length} contacts`);
 
-  let upsertResults: Array<object> = [];
+  let upsertResults: CreateUpdateUpsertResult[] = [];
 
   for (const element of allContactsResponse) {
-    const createOrUpdateContactResult = await createOrUpdateContact(element);
+    let createOrUpdateContactResult: CreateUpdateUpsertResult;
+    if (useVerboseCreateOrUpdate){
+      break;
+
+    } else {
+      createOrUpdateContactResult = await upsertContact(element);
+    }
     upsertResults.push(createOrUpdateContactResult);
   }
 
