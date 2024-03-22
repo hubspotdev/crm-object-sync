@@ -9,6 +9,13 @@ import { getCustomerId } from './utils';
 // Use verbose (but slower) create or update functionality
 const useVerboseCreateOrUpdate: boolean = false;
 
+// HubSpot client rate limit settings
+const DEFAULT_LIMITER_OPTIONS = {
+  minTime: 1000 / 9,
+  maxConcurrent: 6,
+  id: 'hubspot-client-limiter'
+};
+
 // HubSpot Client arguments
 // Unused values must be undefined to avoid HubSpot client errors 
 const pageLimit: number = 100;
@@ -30,12 +37,6 @@ type JobRunResults = {
   failed: number,
   hsID_updated: number,
   errors: number
-};
-
-const DEFAULT_LIMITER_OPTIONS = {
-  minTime: 1000 / 9,
-  maxConcurrent: 6,
-  id: 'hubspot-client-limiter'
 };
 
 // Avoid overloading Prisma connections
