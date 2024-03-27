@@ -27,16 +27,31 @@ const getArchived: boolean = false;
 
 // Types for handling create/update results
 type CreateUpdateUpsertResult = {
-  resultRecord: Contacts,
+  recordDetails: Contacts,
   updateResult: string,
 };
 
 type JobRunResults = {
-  upsert: number,
-  created: number,
-  failed: number,
-  hsID_updated: number,
-  errors: number
+  upsert: {
+    count: number,
+    records: CreateUpdateUpsertResult[]
+  },
+  created: {
+    count: number,
+    records: CreateUpdateUpsertResult[]
+  },
+  failed: {
+    count: number,
+    records: CreateUpdateUpsertResult[]
+  },
+  hsID_updated: {
+    count: number,
+    records: CreateUpdateUpsertResult[]
+  },
+  errors: {
+    count: number,
+    records: CreateUpdateUpsertResult[]
+  }
 };
 
 // Avoid overloading Prisma connections
@@ -77,7 +92,7 @@ const upsertContact = async (contactData: SimplePublicObject) => {
     upsertResult = "created";
   }
     let result: CreateUpdateUpsertResult = {
-      resultRecord: upsertRecord,
+      recordDetails: upsertRecord,
       updateResult: upsertResult
     };
 
@@ -138,7 +153,7 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
   }
 
   let result: CreateUpdateUpsertResult = {
-    resultRecord: prismaRecord,
+    recordDetails: prismaRecord,
     updateResult: updateResult
   }
   return result;
@@ -156,11 +171,26 @@ const initialContactsSync = async () => {
 
   // Track created/updated/upserted/any errors
   let jobRunResults : JobRunResults = {
-    upsert: 0,
-    created: 0,
-    failed: 0,
-    hsID_updated: 0,
-    errors: 0
+    upsert: {
+      count: 0,
+      records: []
+    },
+    created: {
+      count: 0,
+      records: []
+    },
+    failed: {
+      count: 0,
+      records: []
+    },
+    hsID_updated: {
+      count: 0,
+      records: []
+    },
+    errors: {
+      count: 0,
+      records: []
+    }
   };
 
   // Get all contacts using client
@@ -175,8 +205,6 @@ const initialContactsSync = async () => {
 
   console.log(`Found ${allContactsResponse.length} contacts`);
 
-  let upsertResults: CreateUpdateUpsertResult[] = [];
-
   for (const element of allContactsResponse) {
     let createOrUpdateContactResult: CreateUpdateUpsertResult;
     if (useVerboseCreateOrUpdate){
@@ -184,31 +212,34 @@ const initialContactsSync = async () => {
     } else {
       createOrUpdateContactResult = await upsertContact(element);
     }
-    upsertResults.push(createOrUpdateContactResult);
-    // Update result counts
+    // Add to overall results based on result of create/update result
     switch (createOrUpdateContactResult.updateResult) {
       case "upsert":
-        jobRunResults.upsert += 1;
+        jobRunResults.upsert.count += 1;
+        jobRunResults.upsert.records.push(createOrUpdateContactResult);
         break;
       case "created":
-        jobRunResults.created += 1;
+        jobRunResults.created.count += 1;
+        jobRunResults.created.records.push(createOrUpdateContactResult);
         break;
       case "hsID_updated":
-        jobRunResults.hsID_updated += 1;
+        jobRunResults.hsID_updated.count += 1;
+        jobRunResults.hsID_updated.records.push(createOrUpdateContactResult);
         break;
       case "failed":
-        jobRunResults.failed += 1;
+        jobRunResults.failed.count += 1;
+        jobRunResults.failed.records.push(createOrUpdateContactResult)
         break;
       default:
-        jobRunResults.errors += 1;
+        jobRunResults.errors.count += 1;
+        jobRunResults.errors.records.push(createOrUpdateContactResult);
         break;
     }
   }
 
   return({
     total: allContactsResponse.length,
-    resultsCounts: jobRunResults,
-    results:upsertResults
+    results:jobRunResults
   });
 }
 
