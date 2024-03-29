@@ -96,7 +96,7 @@ const exchangeForTokens = async (
     grant_type,
     refresh_token
   } = exchangeProof;
-  const tokenResponse = await hubspotClient.oauth.tokensApi.createToken(
+  const tokenResponse = await hubspotClient.oauth.tokensApi.create(
     grant_type,
     code,
     redirect_uri,
