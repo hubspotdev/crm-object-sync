@@ -9,7 +9,7 @@ datasource db {
 
 model Contacts {
   id           Int     @id @default(autoincrement())
-  email        String?  @unique
+  email        String? @unique
   first_name   String?
   last_name    String?
   hs_object_id String?
@@ -35,3 +35,9 @@ model Authorization {
   expiresAt    DateTime? @db.Timestamp(6)
 }
 
+model SyncJobs {
+  id            Int       @id @default(autoincrement())
+  executionTime DateTime? @db.Timestamp
+  success       Json?     @db.Json
+  failures      Json?     @db.Json
+}
