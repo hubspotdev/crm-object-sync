@@ -252,8 +252,12 @@ const syncContactsToHubSpot = async () => {
       await syncCohort.sendNetNewContactsToHubspot();
 
       const errors = syncCohort.syncErrors;
+
       const results = syncCohort.syncResults;
-      finalErrors.push(errors);
+      if (errors) {
+        finalErrors.push(errors);
+      }
+
       finalResults.push(results);
       console.log(
         `===== Finished current cohort, still have ${localContacts.length} contacts to sync =====`
