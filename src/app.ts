@@ -3,11 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
-<<<<<<< Updated upstream
 import { syncContactsToHubSpot } from './initialContactSync';
-=======
-import { initialContactsSync } from './initialSyncFromHubSpot';
->>>>>>> Stashed changes
 
 const prisma = new PrismaClient();
 const app: Application = express();
@@ -21,13 +17,9 @@ app.get('/contacts', async (req: Request, res: Response) => {
 });
 
 app.get('/api/install', (req: Request, res: Response) => {
-<<<<<<< Updated upstream
-  res.send(authUrl);
-=======
   res.send(
     `<html><body><a href="${authUrl}" target="blank">${authUrl}</a></body></html>`
   );
->>>>>>> Stashed changes
 });
 
 app.get('/sync-contacts-test', async (req: Request, res: Response) => {
@@ -55,14 +47,11 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
   }
 });
 
-<<<<<<< Updated upstream
-=======
 app.get('/intial-contacts-sync', async (req: Request, res: Response) => {
-  const syncResults = await initialContactsSync();
+  const syncResults = await syncContactsToHubSpot();
   res.send(syncResults);
 });
 
->>>>>>> Stashed changes
 app.listen(PORT, function () {
   console.log(`App is listening on port ${PORT}`);
 });
