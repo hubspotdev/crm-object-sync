@@ -211,6 +211,8 @@ class BatchToBeSynced {
   }
 
   public get syncErrors(): Error {
+    console.log(this.#syncErrors.message);
+    console.log(this.#syncErrors.message == '');
     return this.#syncErrors;
   }
   public get syncResults() {
@@ -231,6 +233,9 @@ const syncContactsToHubSpot = async () => {
   let finalResults: any[] = [];
   let finalErrors: any[] = [];
   const syncJobId = syncJob.id;
+  console.log(
+    `===== Starting Sync Job for ${localContacts.length} contacts =====`
+  );
   while (localContacts.length > 0) {
     let batch = splitBatchByMaxBatchSize(localContacts, start);
 
@@ -252,8 +257,9 @@ const syncContactsToHubSpot = async () => {
       const results = syncCohort.syncResults;
       finalErrors.push(errors);
       finalResults.push(results);
-
-      console.log('Finished running');
+      console.log(
+        `===== Finished current cohort, still have ${localContacts.length} contacts to sync =====`
+      );
     }
     await syncCohort.saveHSContactIDToDatabase();
   }
