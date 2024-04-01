@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "SyncJobs" ALTER COLUMN "executionTime" DROP NOT NULL,
+ALTER COLUMN "success" DROP NOT NULL,
+ALTER COLUMN "failures" DROP NOT NULL;
