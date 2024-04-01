@@ -66,8 +66,8 @@ class BatchToBeSynced {
     startedAt: new Date(),
     completedAt: new Date()
   };
-  #batchReadError: Error = new Error();
-  #syncErrors: Error = new Error();
+  #batchReadError: Error | null = null;
+  #syncErrors: Error | null = null;
   hubspotClient: Client;
   constructor(startingContacts: Contacts[], hubspotClient: Client) {
     this.hubspotClient = hubspotClient;
@@ -210,10 +210,8 @@ class BatchToBeSynced {
     }
   }
 
-  public get syncErrors(): Error {
-    console.log(this.#syncErrors.message);
-    console.log(this.#syncErrors.message == '');
-    return this.#syncErrors;
+  public get syncErrors(): Error | null {
+    return this.#syncErrors?.message !== '' ? this.#syncErrors : null;
   }
   public get syncResults() {
     return this.#batchCreateOutput;
@@ -267,6 +265,9 @@ const syncContactsToHubSpot = async () => {
     where: { id: syncJobId },
     data: { success: finalResults, failures: finalErrors }
   });
+  console.log(
+    `==== Batch sync complete, this job produced ${finalResults.length} successes and ${finalErrors.length} errors, check the syncJobs table for full results ====`
+  );
   return { results: { success: finalResults, errors: finalErrors } };
 };
 
