@@ -4,6 +4,7 @@ import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
 import { initialContactsSync } from './initialSyncFromHubSpot';
+import { syncContactsToHubSpot } from './initialContactSync';
 
 const prisma = new PrismaClient();
 const app: Application = express();
@@ -53,6 +54,5 @@ app.get('/intial-contacts-sync', async (req: Request, res: Response) => {
 });
 
 app.listen(PORT, function () {
-  console.log(`App is listening on port ${PORT}`);
   console.log(`App is listening on port ${PORT}`);
 });
