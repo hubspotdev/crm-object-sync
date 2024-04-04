@@ -40,7 +40,6 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
     try {
       const authInfo = await redeemCode(code.toString());
       const accessToken = authInfo.accessToken;
-      syncContactsToHubSpot();
       res.redirect(`http://localhost:${PORT}/`);
     } catch (error: any) {
       res.redirect(`/?errMessage=${error.message}`);
