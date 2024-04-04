@@ -216,7 +216,7 @@ class BatchToBeSynced {
     }
   }
 
-  public get syncErrors(): Error | null {
+  public get syncErrors() {
     return this.#syncErrors?.message !== '' ? this.#syncErrors : null;
   }
   public get syncResults() {
