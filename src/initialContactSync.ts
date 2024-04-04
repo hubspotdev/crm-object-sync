@@ -202,9 +202,12 @@ class BatchToBeSynced {
       : this.#batchReadOutput.results;
     for (const contact of savedContacts) {
       try {
+        if (!contact.properties.email) {
+          throw new Error('Need an email address to save contacts');
+        }
         await prisma.contacts.update({
           where: {
-            email: contact.properties.email || ''
+            email: contact.properties.email
           },
           data: {
             hs_object_id: contact.id
