@@ -10,10 +10,10 @@ import {
   SimplePublicObjectBatchInput,
   SimplePublicObjectInputForCreate,
   BatchResponseSimplePublicObjectWithErrors,
-  BatchResponseSimplePublicObject
+  BatchResponseSimplePublicObject,
+  StandardError
 } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import prisma from '../prisma';
-import { is } from '@babel/types';
 
 interface KeyedContacts extends Contacts {
   [key: string]: any;
@@ -67,7 +67,7 @@ class BatchToBeSynced {
     completedAt: new Date()
   };
   #batchReadError: Error | null = null;
-  #syncErrors: Error | null = null;
+  #syncErrors: Error | StandardError | null = null;
   hubspotClient: Client;
   constructor(startingContacts: Contacts[], hubspotClient: Client) {
     this.hubspotClient = hubspotClient;
@@ -121,7 +121,6 @@ class BatchToBeSynced {
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs
       );
-
       this.#batchReadOutput = response;
     } catch (error) {
       if (error instanceof Error) {
@@ -182,6 +181,12 @@ class BatchToBeSynced {
       const response = await this.hubspotClient.crm.contacts.batchApi.create({
         inputs: contactsToSendToHubSpot
       });
+      if (
+        response instanceof BatchResponseSimplePublicObjectWithErrors &&
+        response.errors
+      ) {
+        this.#syncErrors = response.errors;
+      }
       this.#batchCreateOutput = response;
       return response;
     } catch (error) {
