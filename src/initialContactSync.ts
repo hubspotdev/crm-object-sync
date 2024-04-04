@@ -78,6 +78,8 @@ class BatchToBeSynced {
         `Batch is too big, please supply less than ${MAX_BATCH_SIZE} `
       );
     }
+    this.createMapOfEmailsToNativeIds();
+    this.readyBatchForBatchRead();
   }
   isLessThanMaxBatchSize() {
     return this.startingContacts.length <= MAX_BATCH_SIZE;
@@ -237,8 +239,6 @@ const syncContactsToHubSpot = async () => {
     let batch = splitBatchByMaxBatchSize(localContacts, start);
 
     const syncCohort = new BatchToBeSynced(batch, hubspotClient);
-    syncCohort.createMapOfEmailsToNativeIds();
-    syncCohort.readyBatchForBatchRead();
 
     await syncCohort.batchRead();
 
