@@ -90,6 +90,7 @@ class BatchToBeSynced {
     for (let i = 0; i < this.startingContacts.length; i++) {
       const contact = this.startingContacts[i];
       if (!contact.email) {
+        return true;
         // ignore contacts without email addresses for now
       }
 
@@ -185,7 +186,7 @@ class BatchToBeSynced {
         response instanceof BatchResponseSimplePublicObjectWithErrors &&
         response.errors
       ) {
-        this.#syncErrors = response.errors;
+        this.#syncErrors.push(response.errors);
       }
       this.#batchCreateOutput = response;
       return response;
