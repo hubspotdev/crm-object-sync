@@ -89,7 +89,6 @@ class BatchToBeSynced {
       const contact = this.startingContacts[i];
       if (!contact.email) {
         // ignore contacts without email addresses for now
-        return false;
       }
 
       this.mapOfEmailsToNativeIds.set(contact.email, contact.id);
