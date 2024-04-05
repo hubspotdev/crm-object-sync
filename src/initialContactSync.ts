@@ -67,7 +67,8 @@ class BatchToBeSynced {
     completedAt: new Date()
   };
   #batchReadError: Error | null = null;
-  #syncErrors: Error | StandardError | null = null;
+  #syncErrors: StandardError[] | null = null;
+  #saveErrors: Error[] | null = null;
   hubspotClient: Client;
   constructor(startingContacts: Contacts[], hubspotClient: Client) {
     this.hubspotClient = hubspotClient;
@@ -186,13 +187,21 @@ class BatchToBeSynced {
         response instanceof BatchResponseSimplePublicObjectWithErrors &&
         response.errors
       ) {
-        this.#syncErrors.push(response.errors);
+        if (Array.isArray(this.#syncErrors)) {
+          this.#syncErrors.concat(response.errors);
+        } else {
+          this.#syncErrors = response.errors;
+        }
       }
       this.#batchCreateOutput = response;
       return response;
     } catch (error) {
       if (error instanceof Error) {
-        this.#syncErrors = error;
+        if (this.#saveErrors) {
+          this.#saveErrors.push(error);
+        } else {
+          this.#saveErrors = [error];
+        }
       }
     }
   }
@@ -221,7 +230,10 @@ class BatchToBeSynced {
   }
 
   public get syncErrors() {
-    return this.#syncErrors?.message !== '' ? this.#syncErrors : null;
+    return this.#syncErrors;
+  }
+  public get saveErrors() {
+    return this.#saveErrors;
   }
   public get syncResults() {
     return this.#batchCreateOutput;
