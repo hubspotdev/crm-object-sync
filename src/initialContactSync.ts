@@ -12,6 +12,7 @@ import {
   BatchResponseSimplePublicObjectWithErrors,
   BatchResponseSimplePublicObject,
   StandardError
+
 } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import prisma from '../prisma';
 
@@ -42,6 +43,7 @@ interface ContactWithEmail extends Contacts {
 
 class BatchToBeSynced {
   startingContacts: Contacts[] = [];
+
   cohortSize: number = 0;
   nativeIdsToRemoveFromBatchBeforeCreateAttempt = [];
   mapOfEmailsToNativeIds: Map<string, number> = new Map(); // might want to make this a private property
@@ -65,34 +67,43 @@ class BatchToBeSynced {
     results: [],
     startedAt: new Date(),
     completedAt: new Date()
-  };
+
   #batchReadError: Error | null = null;
   #syncErrors: StandardError[] | null = null;
   #saveErrors: Error[] | null = null;
+
   hubspotClient: Client;
   constructor(startingContacts: Contacts[], hubspotClient: Client) {
     this.hubspotClient = hubspotClient;
     this.startingContacts = startingContacts;
+
     this.cohortSize = this.startingContacts.length;
+
+
     if (!this.isLessThanMaxBatchSize()) {
       throw new Error(
         `Batch is too big, please supply less than ${MAX_BATCH_SIZE} `
       );
     }
+
     this.createMapOfEmailsToNativeIds();
     this.readyBatchForBatchRead();
+
   }
   isLessThanMaxBatchSize() {
     return this.startingContacts.length <= MAX_BATCH_SIZE;
   }
 
   createMapOfEmailsToNativeIds() {
+
     // Use for of loop to impreove readability
     for (let i = 0; i < this.startingContacts.length; i++) {
       const contact = this.startingContacts[i];
       if (!contact.email) {
+
         return true;
         // ignore contacts without email addresses for now
+
       }
 
       this.mapOfEmailsToNativeIds.set(contact.email, contact.id);
@@ -119,6 +130,7 @@ class BatchToBeSynced {
   async batchRead() {
     const accessToken = await getAccessToken(customerId);
     this.hubspotClient.setAccessToken(accessToken);
+
     try {
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs
@@ -129,6 +141,7 @@ class BatchToBeSynced {
         this.#batchReadError = error;
       }
     }
+
   }
 
   removeKnownContactsFromBatch() {
@@ -139,6 +152,7 @@ class BatchToBeSynced {
           : '';
       }
     );
+
 
     for (const email of emailsOfKnownContacts) {
       this.mapOfEmailsToNativeIds.delete(email);
@@ -151,7 +165,9 @@ class BatchToBeSynced {
       const matchedContact = this.startingContacts.find(
         (startingContact) => startingContact.email == emailAddress
       );
+
       const propertiesToSend = ['email', 'firstname', 'lastname']; // Make this a DB call to mapped Properties when combined with property mapping use case
+
       if (!matchedContact) {
         return false;
       }
@@ -159,6 +175,8 @@ class BatchToBeSynced {
         contact: KeyedContacts,
         propertiesToSend: string[]
       ): SimplePublicObjectInputForCreate['properties'] => {
+
+
         const propertiesSection: SimplePublicObjectInputForCreate['properties'] =
           {};
         for (const property of propertiesToSend) {
@@ -179,6 +197,7 @@ class BatchToBeSynced {
 
       contactsToSendToHubSpot.push(formattedContact);
     });
+
     try {
       const response = await this.hubspotClient.crm.contacts.batchApi.create({
         inputs: contactsToSendToHubSpot
@@ -218,11 +237,13 @@ class BatchToBeSynced {
         await prisma.contacts.update({
           where: {
             email: contact.properties.email
+
           },
           data: {
             hs_object_id: contact.id
           }
         });
+
       } catch (error) {
         throw new Error('Encountered an issue saving a record to the database');
       }
@@ -238,6 +259,7 @@ class BatchToBeSynced {
   public get syncResults() {
     return this.#batchCreateOutput;
   }
+
 }
 
 const syncContactsToHubSpot = async () => {
@@ -249,10 +271,12 @@ const syncContactsToHubSpot = async () => {
     data: { executionTime: new Date() }
   });
 
+
   let start = 0;
   let finalResults: any[] = [];
   let finalErrors: any[] = [];
   const syncJobId = syncJob.id;
+
   console.log(
     `===== Starting Sync Job for ${localContacts.length} contacts =====`
   );
@@ -284,14 +308,17 @@ const syncContactsToHubSpot = async () => {
       );
     }
     await syncCohort.saveHSContactIDToDatabase();
+
   }
   await prisma.syncJobs.update({
     where: { id: syncJobId },
     data: { success: finalResults, failures: finalErrors }
   });
+
   console.log(
     `==== Batch sync complete, this job produced ${finalResults.length} successes and ${finalErrors.length} errors, check the syncJobs table for full results ====`
   );
+
   return { results: { success: finalResults, errors: finalErrors } };
 };
 

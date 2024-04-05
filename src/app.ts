@@ -4,6 +4,7 @@ import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
 import { initialContactsSync } from './initialSyncFromHubSpot';
+
 import { syncContactsToHubSpot } from './initialContactSync';
 
 const prisma = new PrismaClient();
@@ -40,6 +41,7 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
     try {
       const authInfo = await redeemCode(code.toString());
       const accessToken = authInfo.accessToken;
+      syncContactsToHubSpot();
       res.redirect(`http://localhost:${PORT}/`);
     } catch (error: any) {
       res.redirect(`/?errMessage=${error.message}`);

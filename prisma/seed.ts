@@ -9,12 +9,15 @@ const data: Prisma.ContactsCreateManyInput[] = Array.from({ length: 1000 }).map(
   () => ({
     first_name: faker.person.firstName(),
     last_name: faker.person.lastName(),
+
     email: faker.internet.email().toLowerCase() //normalize before adding to db
+
   })
 );
 
 /*Run seed command and the function below inserts data in the database*/
 async function main() {
+
   console.log(`=== Generated ${data.length} contacts ===`);
   await prisma.contacts.createMany({
     data,
