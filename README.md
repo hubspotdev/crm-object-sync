@@ -34,3 +34,11 @@ This project demonstrates how to:
    - `crm.schemas.contacts.read`
 9. run `npm run dev` to start the server
 10. Visit `http://localhost:3000/api/install` in a browser to get the oauth install link
+
+## Where to get help?
+
+Please open an issue to report bugs or request features.
+
+## Who maintains and contributes to this project
+
+Various teams at HubSpot that focus on developer experience and app marketplace quality maintain and contribute to this project.
