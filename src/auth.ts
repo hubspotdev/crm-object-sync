@@ -1,7 +1,8 @@
 import 'dotenv/config';
-import * as hubspot from '@hubspot/api-client';
+
 import { Authorization, PrismaClient } from '@prisma/client';
 import { PORT, getCustomerId } from './utils';
+import { hubspotClient } from './clients';
 
 interface ExchangeProof {
   grant_type: string;
@@ -46,8 +47,6 @@ const EXCHANGE_CONSTANTS = {
   client_id: CLIENT_ID,
   client_secret: CLIENT_SECRET
 };
-
-const hubspotClient = new hubspot.Client();
 
 const prisma = new PrismaClient();
 
