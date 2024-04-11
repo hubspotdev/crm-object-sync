@@ -4,7 +4,7 @@ import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
 import { initialContactsSync } from './initialSyncFromHubSpot';
 
-import { syncContactsToHubSpot } from './initialContactSync';
+import { syncContactsToHubSpot } from './initialSyncToHubSpot';
 import { prisma } from './clients';
 
 const app: Application = express();
