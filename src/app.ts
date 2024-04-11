@@ -1,5 +1,4 @@
 import express, { Application, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
