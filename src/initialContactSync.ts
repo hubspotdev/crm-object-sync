@@ -13,22 +13,13 @@ import {
   BatchResponseSimplePublicObject,
   StandardError
 } from '@hubspot/api-client/lib/codegen/crm/contacts';
-import prisma from '../prisma';
+import { prisma, hubspotClient } from './clients';
 
 interface KeyedContacts extends Contacts {
   [key: string]: any;
 }
 
-const DEFAULT_LIMITER_OPTIONS = {
-  minTime: 1000 / 9,
-  maxConcurrent: 6,
-  id: 'hubspot-client-limiter'
-};
 const customerId = getCustomerId();
-
-const hubspotClient = new Client({
-  limiterOptions: DEFAULT_LIMITER_OPTIONS
-});
 
 const MAX_BATCH_SIZE = 100;
 
