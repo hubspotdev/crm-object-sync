@@ -1,3 +1,5 @@
+# CRM Object Sync
+
 ## What this project does:
 
 This CRM Object Sync repository demonstrates best integration practices for syncing CRM  contact records between HubSpot and external applications for a product management use case.
@@ -26,7 +28,7 @@ Setup:
 
 2. Clone the repo
 
-3. Create the .env file with these entries (see examples in the [.env.example](./.env.sample) file):
+3. Create the .env file with these entries (see examples in the [.env.example](./.env.example) file):
 
 - DATABASE_URL the (local) url to the postgres database (e.g. `postgresql://{username}:{password}@localhost:5432/{database name}`
 
@@ -60,6 +62,6 @@ Setup:
 
 Please open an issue to report bugs or request features.
 
-## Who maintains and contributes to this project\*\*
+## Who maintains and contributes to this project
 
 Various teams at HubSpot that focus on developer experience and app marketplace quality maintain and contribute to this project.
