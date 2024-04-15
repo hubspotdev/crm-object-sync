@@ -1,19 +1,17 @@
 import express, { Application, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authUrl, redeemCode, getAccessToken } from './auth';
 import 'dotenv/config';
 import { PORT, getCustomerId } from './utils';
 import { initialContactsSync } from './initialSyncFromHubSpot';
 
-import { syncContactsToHubSpot } from './initialContactSync';
+import { syncContactsToHubSpot } from './initialSyncToHubSpot';
+import { prisma } from './clients';
 
-const prisma = new PrismaClient();
 const app: Application = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/contacts', async (req: Request, res: Response) => {
-  const prisma = new PrismaClient();
   const contacts = await prisma.contacts.findMany({});
   res.send(contacts);
 });
@@ -24,7 +22,7 @@ app.get('/api/install', (req: Request, res: Response) => {
   );
 });
 
-app.get('/sync-contacts-test', async (req: Request, res: Response) => {
+app.get('/sync-contacts', async (req: Request, res: Response) => {
   const syncResults = await syncContactsToHubSpot();
   res.send(syncResults);
 });
@@ -41,7 +39,6 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
     try {
       const authInfo = await redeemCode(code.toString());
       const accessToken = authInfo.accessToken;
-      syncContactsToHubSpot();
       res.redirect(`http://localhost:${PORT}/`);
     } catch (error: any) {
       res.redirect(`/?errMessage=${error.message}`);
