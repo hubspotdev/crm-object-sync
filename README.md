@@ -64,4 +64,4 @@ Please open an issue to report bugs or request features.
 
 ## Who maintains and contributes to this project
 
-Various teams at HubSpot that focus on developer experience and app marketplace quality maintain and contribute to this project.
+Various teams at HubSpot that focus on developer experience and app marketplace quality maintain and contribute to this project. In particular, this project was made possible by @therealdadams, @rahmona-henry and @zman81988
