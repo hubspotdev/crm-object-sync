@@ -46,7 +46,7 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/intial-contacts-sync', async (req: Request, res: Response) => {
+app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
   const syncResults = await initialContactsSync();
   res.send(syncResults);
 });

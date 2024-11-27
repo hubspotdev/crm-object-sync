@@ -20,6 +20,20 @@ This project demonstrates how to:
 
   - The second option has more verbose reporting. It tries to create a new record in the database. If there's already a record with a matching email, it adds the `hs_object_id` to the existing record. Contacts without email are just created as normal. The results will indicate the number of records created (with or without email) and the number of existing records that the `hs_object_id` was added to.
 
+## Endpoints:
+
+- **GET /api/install**: Sends a simple HTML response containing a link (authUrl) for users to authenticate. The link opens in a new tab when clicked. This should be the first step a new user or client performs to initiate the OAuth2 authorization process.
+
+- **GET /oauth-callback**: It processes the authorization code to obtain an access token for the user and any failure in retrieving it redirects with an error message.
+
+- **GET /** : Once authenticated, the access token can be retrieved using this endpoint. This ensures that any subsequent API operations requiring authentication can be performed.
+
+- **GET /initial-contacts-sync**: After establishing authentication and obtaining an access token, the initial **synchronization of contacts from HubSpot to the local database** can occur.
+
+- **GET /contacts**: This endpoint fetches contacts from the local database.
+
+- **GET /sync-contacts**: This is used to **synchronize any updates or new contact data from the local database to HubSpot**. Email is used as a primary key for logical deduplication, making it crucial that email addresses are correctly managed and non-null where possible. To minimize errors, we first retrieve existing contacts from HubSpot and exclude those already known from our batch. The following methods are employed to send new contacts to HubSpot and to store their HubSpot object IDs back in our local database.
+
 ## Getting started with the project:
 
 Setup:
@@ -40,9 +54,9 @@ Setup:
 
 5. Run `npm run db-init` to create the necessary tables in PostgreSQL
 
-6. Optional: Run `npm dev seed` to seed the database with test data
+6. Optional: Run `npm run db-seed` to seed the database with test data
 
-7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add localhost:3001/oauth-callback as a redirect URL
+7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add localhost:3000/oauth-callback as a redirect URL
 
 8. The app uses the following scopes:
 
