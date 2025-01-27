@@ -60,13 +60,15 @@ Setup:
 
 8. The app uses the following scopes:
 
-- crm.schemas.companies.write
-
-- crm.schemas.contacts.write
-
 - crm.schemas.companies.read
-
+- crm.schemas.companies.write
+- crm.objects.companies.read
+- crm.objects.companies.write
 - crm.schemas.contacts.read
+- crm.schemas.contacts.write
+- crm.objects.contacts.read
+- crm.objects.contacts.write
+
 
 9. Run `npm run dev` to start the server
 
