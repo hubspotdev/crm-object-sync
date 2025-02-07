@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { Contacts, PrismaClient } from '@prisma/client';
 import { Client } from '@hubspot/api-client';
 import { exchangeForTokens, getAccessToken } from './auth';
-import { getCustomerId } from './utils';
+import { getCustomerId } from './utils/utils';
 import {
   BatchReadInputSimplePublicObjectId,
   BatchResponseSimplePublicObjectStatusEnum,
