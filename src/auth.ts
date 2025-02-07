@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import { Authorization, PrismaClient } from '@prisma/client';
-import { PORT, getCustomerId } from './utils';
+import { PORT, getCustomerId } from './utils/utils';
 import { hubspotClient } from './clients';
 
 interface ExchangeProof {
