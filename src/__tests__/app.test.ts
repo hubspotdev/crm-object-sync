@@ -17,6 +17,7 @@ import { syncContactsToHubSpot } from '../initialSyncToHubSpot';
 import { initialContactsSync } from '../initialSyncFromHubSpot';
 import { redeemCode, getAccessToken, authUrl } from '../auth';
 import { getCustomerId } from '../utils/utils';
+import shutdown from '../utils/shutdown';
 
 // Mock all external dependencies
 jest.mock('../clients', () => ({
@@ -61,8 +62,21 @@ beforeAll(done => {
   });
 });
 
-afterAll(done => {
-  server.close(done);
+afterAll((done) => {
+  if (server) {
+    console.log('Closing test server...');
+    server.close((err?: Error) => {
+      if (err) {
+        console.error('Error closing server:', err);
+        done(err);
+      } else {
+        console.log('Test server closed successfully');
+        done();
+      }
+    });
+  } else {
+    done();
+  }
 });
 
 describe('Express App', () => {

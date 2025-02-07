@@ -6,6 +6,12 @@ async function shutdown(): Promise<void> {
     console.log("Initiating graceful shutdown...");
 
     const closeServerPromise = new Promise<void>((resolve, reject) => {
+      if (!server) {
+        console.log("No server instance to close.");
+        resolve();
+        return;
+      }
+
       server.close((err) => {
         console.log("Server close callback called.");
         if (err) {

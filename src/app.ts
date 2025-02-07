@@ -7,6 +7,7 @@ import { syncContactsToHubSpot } from './initialSyncToHubSpot';
 import { prisma } from './clients';
 import handleError from './utils/error';
 import { logger } from './utils/logger';
+import { Server } from 'http';
 
 const app: Application = express();
 app.use(express.json());
@@ -99,8 +100,24 @@ app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
   }
 });
 
-const server = app.listen(PORT, function () {
-  console.log(`App is listening on port ${PORT}`);
-});
+let server: Server | null = null;
 
-export { app, server };
+function startServer() {
+  if (!server) {
+    server = app.listen(PORT, function (err?: Error) {
+      if (err) {
+        console.error('Error starting server:', err);
+        return;
+      }
+      console.log(`App is listening on port ${PORT}`);
+    });
+  }
+  return server;
+}
+
+// Start the server only if this file is run directly
+if (require.main === module) {
+  startServer();
+}
+
+export { app, server, startServer };
