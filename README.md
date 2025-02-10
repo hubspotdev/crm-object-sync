@@ -56,19 +56,18 @@ Setup:
 
 6. Optional: Run `npm run db-seed` to seed the database with test data
 
-7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add localhost:3000/oauth-callback as a redirect URL
+7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL
 
 8. The app uses the following scopes:
 
-- crm.schemas.companies.read
-- crm.schemas.companies.write
+- crm.objects.contacts.read
+- crm.objects.contacts.write
 - crm.objects.companies.read
 - crm.objects.companies.write
 - crm.schemas.contacts.read
 - crm.schemas.contacts.write
-- crm.objects.contacts.read
-- crm.objects.contacts.write
-
+- crm.schemas.companies.read
+- crm.schemas.companies.write
 
 9. Run `npm run dev` to start the server
 
@@ -76,7 +75,7 @@ Setup:
 
 ## Where to get help?
 
-Please open an issue to report bugs or request features.
+If you encounter any bugs or issues, please report them by opening a GitHub issue. For feedback or suggestions for new code examples, we encourage you to use this [form](https://survey.hsforms.com/1RT0f09LSTHuflzNtMbr2jA96it).
 
 ## Who maintains and contributes to this project
 
