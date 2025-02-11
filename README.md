@@ -73,6 +73,10 @@ Setup:
 
 10. Visit `http://localhost:3000/api/install` in a browser to get the OAuth install link
 
+## Testing:
+To execute the tests, use the following command `npm test`.
+To check the test coverage report use `npm run test:coverage`.
+
 ## Where to get help?
 
 If you encounter any bugs or issues, please report them by opening a GitHub issue. For feedback or suggestions for new code examples, we encourage you to use this [form](https://survey.hsforms.com/1RT0f09LSTHuflzNtMbr2jA96it).
