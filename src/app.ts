@@ -8,6 +8,10 @@ import { prisma } from './clients';
 import handleError from './utils/error';
 import { logger } from './utils/logger';
 import { Server } from 'http';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import { commonSchemas, apiEndpoints } from './swagger/definitions';
+import { specs } from './swagger';
 
 const app: Application = express();
 app.use(express.json());
@@ -99,6 +103,8 @@ app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
       .json({ message: 'An error occurred during the initial contacts sync.' });
   }
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 let server: Server | null = null;
 
