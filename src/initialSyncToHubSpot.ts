@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { Contacts, PrismaClient } from '@prisma/client';
 import { Client } from '@hubspot/api-client';
-import { exchangeForTokens, getAccessToken } from './auth';
+import { setAccessToken } from './auth';
 import { getCustomerId } from './utils/utils';
 import {
   BatchReadInputSimplePublicObjectId,
@@ -111,9 +111,9 @@ class BatchToBeSynced {
   }
 
   async batchRead() {
-    const accessToken = await getAccessToken(customerId);
-    this.hubspotClient.setAccessToken(accessToken);
-
+    // const accessToken = await getAccessToken(customerId);
+    // this.hubspotClient.setAccessToken(accessToken);
+    setAccessToken();
     try {
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs

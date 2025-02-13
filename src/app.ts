@@ -8,9 +8,7 @@ import { prisma } from './clients';
 import handleError from './utils/error';
 import { logger } from './utils/logger';
 import { Server } from 'http';
-import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { commonSchemas, apiEndpoints } from './swagger/definitions';
 import { specs } from './swagger';
 
 const app: Application = express();
