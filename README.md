@@ -43,9 +43,22 @@ This project demonstrates how to:
 
 1. **Prerequisites**
 
+   - Go to [HubSpot Developer Portal](https://developers.hubspot.com/)
+   - Create a new public app
+   - Configure the following scopes:
+     - `crm.objects.contacts.read`
+     - `crm.objects.contacts.write`
+     - `crm.objects.companies.read`
+     - `crm.objects.companies.write`
+     - `crm.schemas.contacts.read`
+     - `crm.schemas.contacts.write`
+     - `crm.schemas.companies.read`
+     - `crm.schemas.companies.write`
+   - Add `http://localhost:3001/oauth-callback` as a redirect URL
+   - Save your Client ID and Client Secret for the next steps
    - Install [PostgreSQL](https://www.postgresql.org/download/)
    - Create an empty database
-   - Have HubSpot public app credentials ready
+   - Have HubSpot app credentials ready
 
 2. **Install Dependencies**
 
