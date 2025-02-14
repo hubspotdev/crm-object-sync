@@ -62,10 +62,6 @@ This project demonstrates how to:
 
 2. **Install Dependencies**
 
-```bash
-npm install
-```
-
 - Download and install PostgreSQL, make sure it's running, and create an empty database. You need the username and password (defaults username is postgres and no password)
 - Clone the repo
 - Create the .env file with these entries:
@@ -78,24 +74,6 @@ npm install
   Visit http://localhost:3001/api/install in a browser to get the OAuth install link
   -Run `npm run seed` to seed the database with test data, select an industry for the data examples
   -Once the server is running, you can access the application and API documentation at http://localhost:3001/api-docs.
-
-## Endpoints
-
-### Authentication
-
-- `GET /api/install` - Returns installation page with HubSpot OAuth link
-- `GET /oauth-callback` - Processes OAuth authorization code
-- `GET /` - Retrieves access token for authenticated user
-
-### Contact Management
-
-- `GET /contacts` - Fetches contacts from local database
-- `GET /initial-contacts-sync` - Syncs contacts from HubSpot to local database
-- `GET /sync-contacts` - Syncs contacts from local database to HubSpot
-  - Uses email as primary key for deduplication
-  - Excludes existing HubSpot contacts from sync batch
-
-Each scope enables specific functionality for managing contacts and companies in HubSpot CRM.
 
 ## Endpoints
 
