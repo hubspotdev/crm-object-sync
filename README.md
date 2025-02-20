@@ -59,7 +59,7 @@ This project demonstrates how to:
 
 6. Optional: Run `npm run db-seed` to seed the database with test data
 
-7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL, set the requied scopes to be those in the [Scopes](#scopes) section down below
+7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL, set the required scopes to be those in the [Scopes](#scopes) section down below
 
 8. Run `npm run dev` to start the server
 
