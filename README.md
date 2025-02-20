@@ -15,7 +15,7 @@ CRM Object Sync repository demonstrates best practices for syncing CRM contact r
 - [Dependencies](#dependencies)
   - [Core](#core)
   - [Development](#development)
-- [Where to get help?](#where-to-get-help?)
+- [Where to get help?](#where-to-get-help)
 - [Who maintains and contributes to this project](#who-maintains-and-contributes-to-this-project)
 - [License](#license)
 
