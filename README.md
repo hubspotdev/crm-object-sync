@@ -59,34 +59,23 @@ This project demonstrates how to:
 
 6. Optional: Run `npm run db-seed` to seed the database with test data
 
-7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL
+7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL, set the requied scopes to be those in the [Scopes](#scopes) section down below
 
-8. The app uses the following scopes:
+8. Run `npm run dev` to start the server
 
-- `crm.objects.contacts.read`
-- `crm.objects.contacts.write`
-- `crm.objects.companies.read`
-- `crm.objects.companies.write`
-- `crm.schemas.contacts.read`
-- `crm.schemas.contacts.write`
-- `crm.schemas.companies.read`
-- `crm.schemas.companies.write`
-
-9. Run `npm run dev` to start the server
-
-10. Visit `http://localhost:3000/api/install` in a browser to get the OAuth install link
+9. Visit `http://localhost:3000/api/install` in a browser to get the OAuth install link
 
 ### Scopes
 
-- `crm.objects.contacts.read`
-- `crm.objects.contacts.write`
-- `crm.objects.companies.read`
-- `crm.objects.companies.write`
-- `crm.schemas.contacts.read`
-- `crm.schemas.contacts.write`
-- `crm.schemas.companies.read`
-- `crm.schemas.companies.write`
-- `oauth`
+- `crm.objects.contacts.read` - View properties and other details about contacts
+- `crm.objects.contacts.write` - View properties and create, delete, and make changes to contacts
+- `crm.objects.companies.read` - View properties and other details about companies
+- `crm.objects.companies.write` - View properties and create, delete, or make changes to companies
+- `crm.schemas.contacts.read` - View details about property settings for contacts.
+- `crm.schemas.contacts.write` - Create, delete, or make changes to property settings for contacts
+- `crm.schemas.companies.read` - View details about property settings for companies
+- `crm.schemas.companies.write` - Create, delete, or make changes to property settings for companies
+- `oauth` - Basic scope required for OAuth. This scope is added by default to all apps
 
 ## Endpoints:
 ### Authentication Endpoints
