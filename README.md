@@ -49,12 +49,9 @@ This project demonstrates how to:
 2. Clone the repo
 
 3. Create the .env file with these entries (see examples in the [.env.example](./.env.example) file):
-
-- DATABASE_URL the (local) url to the postgres database (e.g. `postgresql://{username}:{password}@localhost:5432/{database name}`
-
-- CLIENT_ID from Hubspot public app
-
-- CLIENT_SECRET from Hubspot public app
+     - DATABASE_URL the (local) url to the postgres database (e.g. `postgresql://{username}:{password}@localhost:5432/{database name}`
+     - CLIENT_ID from Hubspot public app
+     - CLIENT_SECRET from Hubspot public app
 
 4. Run `npm install` to install the required Node packages.
 
