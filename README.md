@@ -92,6 +92,10 @@ This project demonstrates how to:
   - Uses email as primary key for deduplication
   - Excludes existing HubSpot contacts from sync batch
 
+### Documentation
+
+- `GET /api-docs` - Returns API documentation
+
 ## Scopes
 
 - `crm.schemas.companies.write`
