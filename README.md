@@ -45,7 +45,7 @@ This project demonstrates how to:
 1. **Prerequisites**
 
    - Go to [HubSpot Developer Portal](https://developers.hubspot.com/)
-   - Create a new public app
+   - Create a new private app
    - Configure the following scopes:
      - `crm.objects.contacts.read`
      - `crm.objects.contacts.write`
@@ -67,10 +67,10 @@ This project demonstrates how to:
 - Clone the repo
 - Create the .env file with these entries:
   - DATABASE_URL the (local) url to the postgres database (e.g. postgresql://{username}:{password}@localhost:5432/{database name})
-  - CLIENT_ID from Hubspot public app
-  - CLIENT_SECRET from Hubspot public app
+  - CLIENT_ID from Hubspot private app
+  - CLIENT_SECRET from Hubspot private app
 - Run `npm install` to install the required Node packages.
-- In your HubSpot public app, add `localhost:3001/api/install/oauth-callback` as a redirect URL
+- In your HubSpot private app, add `localhost:3001/api/install/oauth-callback` as a redirect URL
   Run npm run dev to start the server
   Visit http://localhost:3001/api/install in a browser to get the OAuth install link
   -Run `npm run seed` to seed the database with test data, select an industry for the data examples
