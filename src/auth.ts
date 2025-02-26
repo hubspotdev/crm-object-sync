@@ -3,6 +3,8 @@ import 'dotenv/config';
 import { Authorization, PrismaClient } from '@prisma/client';
 import { PORT, getCustomerId } from './utils/utils';
 import { hubspotClient } from './clients';
+import { Client } from '@hubspot/api-client';
+import handleError from './utils/error';
 
 interface ExchangeProof {
   grant_type: string;
@@ -175,4 +177,24 @@ const getAccessToken = async (customerId: string): Promise<string> => {
   }
 };
 
-export { authUrl, exchangeForTokens, redeemCode, getAccessToken };
+async function setAccessToken(): Promise<Client> {
+  try {
+    const accessToken = await getAccessToken(getCustomerId());
+    if (!accessToken) {
+      throw new Error('No access token returned');
+    }
+    hubspotClient.setAccessToken(accessToken);
+    return hubspotClient;
+  } catch (error) {
+    handleError(error, 'Error setting access token');
+    throw new Error('Failed to authenticate HubSpot client');
+  }
+}
+
+export {
+  authUrl,
+  exchangeForTokens,
+  redeemCode,
+  getAccessToken,
+  setAccessToken
+};

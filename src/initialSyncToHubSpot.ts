@@ -2,12 +2,11 @@ import 'dotenv/config';
 
 import { Contacts, PrismaClient } from '@prisma/client';
 import { Client } from '@hubspot/api-client';
-import { exchangeForTokens, getAccessToken } from './auth';
-import { getCustomerId } from './utils/utils';
+import { setAccessToken } from './auth';
+// import { getCustomerId } from './utils/utils';
 import {
   BatchReadInputSimplePublicObjectId,
   BatchResponseSimplePublicObjectStatusEnum,
-  SimplePublicObjectBatchInput,
   SimplePublicObjectInputForCreate,
   BatchResponseSimplePublicObjectWithErrors,
   BatchResponseSimplePublicObject,
@@ -19,7 +18,7 @@ interface KeyedContacts extends Contacts {
   [key: string]: any;
 }
 
-const customerId = getCustomerId();
+// const customerId = getCustomerId();
 
 const MAX_BATCH_SIZE = 100;
 
@@ -111,9 +110,7 @@ class BatchToBeSynced {
   }
 
   async batchRead() {
-    const accessToken = await getAccessToken(customerId);
-    this.hubspotClient.setAccessToken(accessToken);
-
+    setAccessToken();
     try {
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs
@@ -266,7 +263,7 @@ const syncContactsToHubSpot = async () => {
 
     if (syncCohort.mapOfEmailsToNativeIds.size === 0) {
       // take the next set of 100 contacts
-      console.log('all contacts where known, no need to create');
+      console.log('all contacts were known, no need to create');
     } else {
       await syncCohort.sendNetNewContactsToHubspot();
 

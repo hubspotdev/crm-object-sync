@@ -1,17 +1,18 @@
 # CRM Object Sync
 
-CRM Object Sync repository demonstrates best practices for syncing CRM contact records between HubSpot and external applications.
+A demonstration of best integration practices for syncing CRM contact records between HubSpot and external applications for product management use cases.
 
 ## Table of Contents
+
 - [What this project does](#what-this-project-does)
-- [Why is this project useful](#why-is-this-project-useful)
-- [Getting started with the project](#getting-started-with-the-project)
-  - [Setup](#setup)
-  - [Scopes](#scopes)
+- [Why is this project useful?](#why-is-this-project-useful)
+- [Setup](#setup)
+- [Scopes](#scopes)
 - [Endpoints](#endpoints)
-  - [Authentication Endpoints](#authentication-endpoints)
-  - [Synchronization Endpoints](#synchronization-endpoints)
+  - [Authentication](#authentication)
+  - [Contact Management](#contact-management)
 - [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
   - [Core](#core)
   - [Development](#development)
@@ -19,10 +20,9 @@ CRM Object Sync repository demonstrates best practices for syncing CRM contact r
 - [Who maintains and contributes to this project](#who-maintains-and-contributes-to-this-project)
 - [License](#license)
 
-
 ## What this project does:
 
-This CRM Object Sync repository offers guidelines and practical examples to help maintain data consistency and simplify management across multiple platforms.
+This CRM Object Sync repository demonstrates best integration practices for syncing CRM contact records between HubSpot and external applications for a product management use case.
 
 ## Why is this project useful:
 
@@ -32,102 +32,100 @@ This project demonstrates how to:
 
 - Create and seed a PostgreSQL database with contact records
 
-- Sync of seeded contact records from the database to HubSpot, saving the generated `hs_object_id`  back to the database
+- Sync seeded contact records from the database to HubSpot, saving the generated hs_object_id back to the database
 
 - Sync contact records from HubSpot to the database:
 
-  - The default sync option uses the Prisma upsert, matching by email. If there is a record match, it just adds the `hs_object_id` to the existing record. If the contact has no email, it creates a new record in the database. The job results will indicate how many records are upsert and the number of new records without email that were created.
+  - The default sync option uses the Prisma upsert, matching by email. If there is a record match, it just adds the hs_object_id to the existing record. If the contact has no email, it creates a new record in the database. The job results will indicate how many records are upsert and the number of new records without email that were created.
 
-  - The second option has more verbose reporting. It tries to create a new record in the database. If there's already a record with a matching email, it adds the `hs_object_id` to the existing record. Contacts without email are just created as normal. The results will indicate the number of records created (with or without email) and the number of existing records that the `hs_object_id` was added to.
- 
- ## Getting started with the project:
+  - The second option has more verbose reporting. It tries to create a new record in the database. If there's already a record with a matching email, it adds the hs_object_id to the existing record. Contacts without email are just created as normal. The results will indicate the number of records created (with or without email) and the number of existing records that the hs_object_id was added to.
 
-### Setup:
+## Setup
 
-1. Download and install [PostgreSQL](https://www.postgresql.org/download/), make sure it's running, and create an empty database. You need the username and password (defaults username is postgres and no password)
+1. **Prerequisites**
 
-2. Clone the repo
+   - Go to [HubSpot Developer Portal](https://developers.hubspot.com/)
+   - Create a new public app
+   - Configure the following scopes:
+     - `crm.objects.contacts.read`
+     - `crm.objects.contacts.write`
+     - `crm.objects.companies.read`
+     - `crm.objects.companies.write`
+     - `crm.schemas.contacts.read`
+     - `crm.schemas.contacts.write`
+     - `crm.schemas.companies.read`
+     - `crm.schemas.companies.write`
+   - Add `http://localhost:3001/oauth-callback` as a redirect URL
+   - Save your Client ID and Client Secret for the next steps
+   - Install [PostgreSQL](https://www.postgresql.org/download/)
+   - Create an empty database
+   - Have HubSpot app credentials ready
 
-3. Create the .env file with these entries (see examples in the [.env.example](./.env.example) file):
-     - DATABASE_URL the (local) url to the postgres database (e.g. `postgresql://{username}:{password}@localhost:5432/{database name}`
-     - CLIENT_ID from Hubspot public app
-     - CLIENT_SECRET from Hubspot public app
+2. **Install Dependencies**
 
-4. Run `npm install` to install the required Node packages.
+- Download and install PostgreSQL, make sure it's running, and create an empty database. You need the username and password (defaults username is postgres and no password)
+- Clone the repo
+- Create the .env file with these entries:
+  - DATABASE_URL the (local) url to the postgres database (e.g. postgresql://{username}:{password}@localhost:5432/{database name})
+  - CLIENT_ID from Hubspot public app
+  - CLIENT_SECRET from Hubspot public app
+- Run `npm install` to install the required Node packages.
+- In your HubSpot public app, add `localhost:3001/api/install/oauth-callback` as a redirect URL
+  Run npm run dev to start the server
+  Visit http://localhost:3001/api/install in a browser to get the OAuth install link
+  -Run `npm run seed` to seed the database with test data, select an industry for the data examples
+  -Once the server is running, you can access the application and API documentation at http://localhost:3001/api-docs.
 
-5. Run `npm run db-init` to create the necessary tables in PostgreSQL
+## Endpoints
 
-6. Optional: Run `npm run db-seed` to seed the database with test data
+### Authentication
 
-7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL, set the required scopes to be those in the [Scopes](#scopes) section down below
+- `GET /api/install` - Returns installation page with HubSpot OAuth link
+- `GET /oauth-callback` - Processes OAuth authorization code
+- `GET /` - Retrieves access token for authenticated user
 
-8. Run `npm run dev` to start the server
+### Contact Management
 
-9. Visit `http://localhost:3000/api/install` in a browser to get the OAuth install link
+- `GET /contacts` - Fetches contacts from local database
+- `GET /initial-contacts-sync` - Syncs contacts from HubSpot to local database
+- `GET /sync-contacts` - Syncs contacts from local database to HubSpot
+  - Uses email as primary key for deduplication
+  - Excludes existing HubSpot contacts from sync batch
 
-### Scopes
+## Scopes
 
-- `crm.objects.contacts.read` - View properties and other details about contacts
-- `crm.objects.contacts.write` - View properties and create, delete, and make changes to contacts
-- `crm.objects.companies.read` - View properties and other details about companies
-- `crm.objects.companies.write` - View properties and create, delete, or make changes to companies
-- `crm.schemas.contacts.read` - View details about property settings for contacts.
-- `crm.schemas.contacts.write` - Create, delete, or make changes to property settings for contacts
-- `crm.schemas.companies.read` - View details about property settings for companies
-- `crm.schemas.companies.write` - Create, delete, or make changes to property settings for companies
-- `oauth` - Basic scope required for OAuth. This scope is added by default to all apps
-
-## Endpoints:
-### Authentication Endpoints
-
-- `GET /api/install`: Sends a simple HTML response containing a link (authUrl) for users to authenticate. The link opens in a new tab when clicked. This should be the first step a new user or client performs to initiate the OAuth2 authorization process.
-
-- `GET /oauth-callback`: It processes the authorization code to obtain an access token for the user and any failure in retrieving it redirects with an error message.
-
-- `GET /` : Once authenticated, the access token can be retrieved using this endpoint. This ensures that any subsequent API operations requiring authentication can be performed.
-
-### Synchronization Endpoints
-
-- `GET /initial-contacts-sync`: After establishing authentication and obtaining an access token, the initial **synchronization of contacts from HubSpot to the local database** can occur.
-
-- `GET /contacts`: This endpoint fetches contacts from the local database.
-
-- `GET /sync-contacts`: This is used to **synchronize any updates or new contact data from the local database to HubSpot**. Email is used as a primary key for logical deduplication, making it crucial that email addresses are correctly managed and non-null where possible. To minimize errors, we first retrieve existing contacts from HubSpot and exclude those already known from our batch. The following methods are employed to send new contacts to HubSpot and to store their HubSpot object IDs back in our local database.
+- `crm.schemas.companies.write`
+- `crm.schemas.contacts.write`
+- `crm.schemas.companies.read`
+- `crm.schemas.contacts.read`
+- `crm.objects.companies.write`
+- `crm.objects.contacts.write`
+- `crm.objects.companies.read`
+- `crm.objects.contacts.read`
 
 ## Available Scripts
 
 - `npm run dev` - Start development server
-- `npm run prod` - Run the production build
-- `npm run build` - Build TypeScript files
-- `npm run db-seed` - Seed the database
-- `npm run db-init` - Initialize database schema
-- `npm test` - Run test suite
-- `npm run test:watch` - Run tests in watch mode
+- `npm run db-init` - Initialize database tables
+- `npm run db-seed` - Seed database with test data
+- `npm test` - Run tests
 - `npm run test:coverage` - Generate test coverage report
 
 ## Dependencies
 
 ### Core
-- @hubspot/api-client - HubSpot API integration
-- @hubspot/cli-lib - HubSpot CLI tools
-- @prisma/client - Database ORM
-- express - Web framework
-- dotenv - Environment configuration
-- @ngrok/ngrok - Secure tunneling
-- axios - HTTP client
-- prompts - CLI prompts
+
+- Express
+- Prisma
+- PostgreSQL
+- HubSpot Client Libraries
 
 ### Development
-- typescript - Programming language
-- jest - Testing framework
-- prisma - Database toolkit
-- nodemon - Development server
-- supertest - API testing
-- eslint - Code linting
-- ts-node - TypeScript execution
-- prettier - Code formatting
-- ts-jest - TypeScript testing support
 
+- Jest
+- TypeScript
+- ESLint
+- Prettier
 
 ## Where to get help?
 

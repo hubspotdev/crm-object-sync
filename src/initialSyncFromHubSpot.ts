@@ -3,8 +3,7 @@ import 'dotenv/config';
 import { Contacts, Prisma } from '@prisma/client';
 
 import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts';
-import { getAccessToken } from './auth';
-import { getCustomerId } from './utils/utils';
+
 import { hubspotClient, prisma } from './clients';
 
 // Use verbose (but slower) create or update functionality
@@ -163,8 +162,8 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
 // Initial sync FROM HubSpot contacts TO (local) database
 const initialContactsSync = async () => {
   console.log('started sync');
-  const customerId = getCustomerId();
-  const accessToken = await getAccessToken(customerId);
+  // const customerId = getCustomerId();
+  // const accessToken = await getAccessToken(customerId);
 
   // Track created/updated/upserted/any errors
   let jobRunResults: JobRunResults = {
