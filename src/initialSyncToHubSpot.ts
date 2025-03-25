@@ -2,8 +2,7 @@ import 'dotenv/config';
 
 import { Contacts, PrismaClient } from '@prisma/client';
 import { Client } from '@hubspot/api-client';
-import { setAccessToken } from './auth';
-// import { getCustomerId } from './utils/utils';
+import { authenticateHubspotClient } from './auth';
 import {
   BatchReadInputSimplePublicObjectId,
   BatchResponseSimplePublicObjectStatusEnum,
@@ -17,8 +16,6 @@ import { prisma, hubspotClient } from './clients';
 interface KeyedContacts extends Contacts {
   [key: string]: any;
 }
-
-// const customerId = getCustomerId();
 
 const MAX_BATCH_SIZE = 100;
 
@@ -110,7 +107,7 @@ class BatchToBeSynced {
   }
 
   async batchRead() {
-    setAccessToken();
+    await authenticateHubspotClient();
     try {
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs
