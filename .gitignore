@@ -1,8 +1,32 @@
-node_modules
-# Keep environment variables out of version control
+# Environment
 .env
+*.env.docker
+
+# Dependencies
+node_modules/
+
+# Docker
+.docker/
+docker-compose.override.yml
+postgres_data/
+
+# Build & Logs
+dist/
+*.log
+
+# IDE & OS
+.DS_Store
+.vscode/
+.idea/
 
 # Test coverage reports
 coverage/
 coverage/*
 *.lcov
+
+# Docker volumes and data
+**/postgres-data
+
+# IDE and OS specific files
+*.swp
+*.swo

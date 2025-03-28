@@ -1,6 +1,6 @@
 # CRM Object Sync
 
-CRM Object Sync repository demonstrates best practices for syncing CRM contact records between HubSpot and external applications.
+CRM Object Sync repository demonstrates best practices for syncing CRM contact records between HubSpot and external applications. Built with Docker, Node.js, and PostgreSQL for seamless deployment and development.
 
 ## Table of Contents
 - [What this project does](#what-this-project-does)
@@ -22,48 +22,45 @@ CRM Object Sync repository demonstrates best practices for syncing CRM contact r
 
 ## What this project does:
 
-This CRM Object Sync repository offers guidelines and practical examples to help maintain data consistency and simplify management across multiple platforms.
+This CRM Object Sync repository offers guidelines and practical examples to help maintain data consistency and simplify management across multiple platforms, now containerized with Docker for easier setup and deployment.
 
 ## Why is this project useful:
 
 This project demonstrates how to:
 
 - Set up HubSpot authentication and generate OAuth access and refresh tokens
+- Create and manage a containerized PostgreSQL database with contact records
+- Sync data between HubSpot and PostgreSQL within a Docker environment:
 
-- Create and seed a PostgreSQL database with contact records
+  - Sync of seeded contact records from the database to HubSpot, saving the generated `hs_object_id`  back to the database
 
-- Sync of seeded contact records from the database to HubSpot, saving the generated `hs_object_id`  back to the database
+  - Sync contact records from HubSpot to the database:
 
-- Sync contact records from HubSpot to the database:
+    - The default sync option uses the Prisma upsert, matching by email. If there is a record match, it just adds the `hs_object_id` to the existing record. If the contact has no email, it creates a new record in the database. The job results will indicate how many records are upsert and the number of new records without email that were created.
 
-  - The default sync option uses the Prisma upsert, matching by email. If there is a record match, it just adds the `hs_object_id` to the existing record. If the contact has no email, it creates a new record in the database. The job results will indicate how many records are upsert and the number of new records without email that were created.
+    - The second option has more verbose reporting. It tries to create a new record in the database. If there's already a record with a matching email, it adds the `hs_object_id` to the existing record. Contacts without email are just created as normal. The results will indicate the number of records created (with or without email) and the number of existing records that the `hs_object_id` was added to.
 
-  - The second option has more verbose reporting. It tries to create a new record in the database. If there's already a record with a matching email, it adds the `hs_object_id` to the existing record. Contacts without email are just created as normal. The results will indicate the number of records created (with or without email) and the number of existing records that the `hs_object_id` was added to.
- 
  ## Getting started with the project:
 
 ### Setup:
 
-1. Download and install [PostgreSQL](https://www.postgresql.org/download/), make sure it's running, and create an empty database. You need the username and password (defaults username is postgres and no password)
+1. Clone the repo
 
-2. Clone the repo
-
-3. Create the .env file with these entries (see examples in the [.env.example](./.env.example) file):
-     - DATABASE_URL the (local) url to the postgres database (e.g. `postgresql://{username}:{password}@localhost:5432/{database name}`
+2. Create the .env file with these entries (see examples in the [.env.example](./.env.example) file):
      - CLIENT_ID from Hubspot public app
      - CLIENT_SECRET from Hubspot public app
+     - SEED_DATABASE (Optional: set to true to seed the database)
 
-4. Run `npm install` to install the required Node packages.
+3. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL, set the required scopes to be those in the [Scopes](#scopes) section down below
 
-5. Run `npm run db-init` to create the necessary tables in PostgreSQL
+4. Build and run the application:
+- First time setup (with database initialization)
+`docker-compose up setup --build`
 
-6. Optional: Run `npm run db-seed` to seed the database with test data
+- Start the application
+`docker-compose up app`
 
-7. In your [HubSpot public app](https://developers.hubspot.com/docs/api/creating-an-app), add `localhost:3000/oauth-callback` as a redirect URL, set the required scopes to be those in the [Scopes](#scopes) section down below
-
-8. Run `npm run dev` to start the server
-
-9. Visit `http://localhost:3000/api/install` in a browser to get the OAuth install link
+5. Visit `http://localhost:3000/api/install` in a browser to get the OAuth install link
 
 ### Scopes
 
@@ -96,37 +93,39 @@ This project demonstrates how to:
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run prod` - Run the production build
-- `npm run build` - Build TypeScript files
-- `npm run db-seed` - Seed the database
-- `npm run db-init` - Initialize database schema
-- `npm test` - Run test suite
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Generate test coverage report
+- `docker-compose up setup --build` - First time setup (with database initialization)
+- `docker-compose up app` - Start the application
+- `docker-compose exec app npm run db-seed` - Seed the database
+- `docker-compose exec app npm test` - Run test suite
+- `docker-compose exec app npm run test:watch` - Run tests in watch mode
+- `docker-compose exec app npm run test:coverage` - Generate test coverage report
 
 ## Dependencies
 
-### Core
-- @hubspot/api-client - HubSpot API integration
-- @hubspot/cli-lib - HubSpot CLI tools
-- @prisma/client - Database ORM
-- express - Web framework
-- dotenv - Environment configuration
-- @ngrok/ngrok - Secure tunneling
-- axios - HTTP client
-- prompts - CLI prompts
+All dependencies are automatically handled by Docker. However, for reference, here are the key packages used:
 
-### Development
-- typescript - Programming language
-- jest - Testing framework
-- prisma - Database toolkit
-- nodemon - Development server
-- supertest - API testing
-- eslint - Code linting
-- ts-node - TypeScript execution
-- prettier - Code formatting
-- ts-jest - TypeScript testing support
+### Core Dependencies
+These are included in the Docker container:
+- `@hubspot/api-client` - HubSpot API integration
+- `@hubspot/cli-lib` - HubSpot CLI tools
+- `@prisma/client` - Database ORM
+- `express` - Web framework
+- `dotenv` - Environment configuration
+- `@ngrok/ngrok` - Secure tunneling
+- `axios` - HTTP client
+- `prompts` - CLI prompts
+
+### Development Dependencies
+These are also included in the Docker environment:
+- `typescript` - Programming language
+- `jest` - Testing framework
+- `prisma` - Database toolkit
+- `nodemon` - Development server
+- `supertest` - API testing
+- `eslint` - Code linting
+- `ts-node` - TypeScript execution
+- `prettier` - Code formatting
+- `ts-jest` - TypeScript testing support
 
 
 ## Where to get help?
