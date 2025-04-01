@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setAccessToken = exports.getAccessToken = exports.redeemCode = exports.exchangeForTokens = exports.authUrl = void 0;
+exports.authenticateHubspotClient = exports.getAccessToken = exports.redeemCode = exports.exchangeForTokens = exports.authUrl = void 0;
 require("dotenv/config");
 const client_1 = require("@prisma/client");
 const utils_1 = require("./utils/utils");
@@ -139,18 +139,30 @@ const getAccessToken = async (customerId) => {
     }
 };
 exports.getAccessToken = getAccessToken;
-async function setAccessToken() {
+function applyHubSpotAccessToken(accessToken) {
     try {
-        const accessToken = await getAccessToken((0, utils_1.getCustomerId)());
-        if (!accessToken) {
-            throw new Error('No access token returned');
-        }
         clients_1.hubspotClient.setAccessToken(accessToken);
         return clients_1.hubspotClient;
     }
     catch (error) {
-        (0, error_1.default)(error, 'Error setting access token');
-        throw new Error('Failed to authenticate HubSpot client');
+        (0, error_1.default)(error, 'Error setting HubSpot access token');
+        throw new Error(`Failed to apply access token: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
-exports.setAccessToken = setAccessToken;
+async function authenticateHubspotClient() {
+    try {
+        const customerId = (0, utils_1.getCustomerId)();
+        const accessToken = await getAccessToken(customerId);
+        if (!accessToken) {
+            throw new Error(`No access token returned for customer ID: ${customerId}`);
+        }
+        return applyHubSpotAccessToken(accessToken);
+    }
+    catch (error) {
+        (0, error_1.default)(error, 'Error retrieving HubSpot access token');
+        throw error instanceof Error
+            ? new Error(`Failed to authenticate HubSpot client: ${error.message}`)
+            : new Error('Failed to authenticate HubSpot client due to an unknown error');
+    }
+}
+exports.authenticateHubspotClient = authenticateHubspotClient;
