@@ -101,17 +101,18 @@ jobs:
               throw error;
             }
 
-      - name: Commit and push changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Create Pull Request
+        if: success()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: Update GitHub templates from CODE-Hub
+          title: 'chore: Update GitHub templates from CODE-Hub'
+          body: |
+            This PR updates the GitHub templates from CODE-Hub repository.
 
-          git add .github/
-
-          # Only commit if there are changes
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update GitHub templates from CODE-Hub"
-            git push
-          fi
+            - Updates triggered by template changes
+            - Automated PR created by GitHub Actions
+          branch: update-github-templates
+          base: main
+          delete-branch: true
