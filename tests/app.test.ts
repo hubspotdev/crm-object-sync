@@ -6,21 +6,19 @@ import {
   jest,
   beforeEach,
   afterAll,
-  afterEach,
   beforeAll
 } from '@jest/globals';
 import request from 'supertest';
 import { Server } from 'http';
-import { app } from '../app';
-import { prisma } from '../clients';
-import { syncContactsToHubSpot } from '../initialSyncToHubSpot';
-import { initialContactsSync } from '../initialSyncFromHubSpot';
-import { redeemCode, getAccessToken, authUrl } from '../auth';
-import { getCustomerId } from '../utils/utils';
-import shutdown from '../utils/shutdown';
+import { app } from '../src/app';
+import { prisma } from '../src/clients';
+import { syncContactsToHubSpot } from '../src/initialSyncToHubSpot';
+import { initialContactsSync } from '../src/initialSyncFromHubSpot';
+import { redeemCode, getAccessToken, authUrl } from '../src/auth';
+import { getCustomerId } from '../src/utils/utils';
 
 // Mock all external dependencies
-jest.mock('../clients', () => ({
+jest.mock('../src/clients', () => ({
   prisma: {
     contacts: {
       findMany: jest.fn()
@@ -36,14 +34,14 @@ jest.mock('../clients', () => ({
   }
 }));
 
-jest.mock('../initialSyncToHubSpot');
-jest.mock('../initialSyncFromHubSpot');
-jest.mock('../auth', () => ({
+jest.mock('../src/initialSyncToHubSpot');
+jest.mock('../src/initialSyncFromHubSpot');
+jest.mock('../src/auth', () => ({
   authUrl: 'https://app.hubspot.com/oauth/authorize?mock=true',
   redeemCode: jest.fn(),
   getAccessToken: jest.fn()
 }));
-jest.mock('../utils/utils');
+jest.mock('../src/utils/utils');
 
 // Mock environment variables
 process.env.HUBSPOT_CLIENT_ID = 'test-client-id';
@@ -53,7 +51,7 @@ process.env.REDIRECT_URI = 'http://localhost:3000/oauth-callback';
 
 let server: Server;
 
-beforeAll(done => {
+beforeAll((done) => {
   // Find a free port
   const port = 3001; // or any other port different from 3000
   server = app.listen(port, () => {
@@ -94,9 +92,7 @@ describe('Express App', () => {
         mockContacts
       );
 
-      const response = await request(server)
-        .get('/contacts')
-        .expect(200);
+      const response = await request(server).get('/contacts').expect(200);
 
       expect(response.body).toEqual(mockContacts);
     });
@@ -106,9 +102,7 @@ describe('Express App', () => {
         []
       );
 
-      const response = await request(server)
-        .get('/contacts')
-        .expect(200);
+      const response = await request(server).get('/contacts').expect(200);
 
       expect(response.body).toEqual([]);
     });
@@ -118,9 +112,7 @@ describe('Express App', () => {
         new Error('Database connection failed')
       );
 
-      const response = await request(server)
-        .get('/contacts')
-        .expect(500);
+      const response = await request(server).get('/contacts').expect(500);
 
       expect(response.body).toEqual({
         message: 'An error occurred while fetching contacts.'
@@ -132,9 +124,7 @@ describe('Express App', () => {
     const mockUrl = 'https://app.hubspot.com/oauth/authorize?mock=true';
 
     it('should return installation URL', async () => {
-      const response = await request(server)
-        .get('/api/install')
-        .expect(200);
+      const response = await request(server).get('/api/install').expect(200);
 
       expect(response.text).toContain(mockUrl);
       expect(response.text).toMatch(
@@ -154,9 +144,7 @@ describe('Express App', () => {
         mockSyncResults
       );
 
-      const response = await request(server)
-        .get('/sync-contacts')
-        .expect(200);
+      const response = await request(server).get('/sync-contacts').expect(200);
 
       expect(response.body).toEqual(mockSyncResults);
     });
@@ -166,9 +154,7 @@ describe('Express App', () => {
         new Error('Sync failed')
       );
 
-      const response = await request(server)
-        .get('/sync-contacts')
-        .expect(500);
+      const response = await request(server).get('/sync-contacts').expect(500);
 
       expect(response.body).toEqual({
         message: 'An error occurred while syncing contacts.'
@@ -185,9 +171,7 @@ describe('Express App', () => {
         mockAccessToken
       );
 
-      const response = await request(server)
-        .get('/')
-        .expect(200);
+      const response = await request(server).get('/').expect(200);
 
       expect(response.text).toBe(mockAccessToken);
     });
@@ -198,9 +182,7 @@ describe('Express App', () => {
         new Error('Token retrieval failed')
       );
 
-      const response = await request(server)
-        .get('/')
-        .expect(500);
+      const response = await request(server).get('/').expect(500);
 
       expect(response.body).toEqual({
         message: 'An error occurred while fetching the access token.'
@@ -228,9 +210,7 @@ describe('Express App', () => {
     });
 
     it('should handle missing code parameter', async () => {
-      const response = await request(server)
-        .get('/oauth-callback')
-        .expect(400);
+      const response = await request(server).get('/oauth-callback').expect(400);
 
       expect(response.body).toEqual({
         message: 'Code parameter is missing in the query string.'

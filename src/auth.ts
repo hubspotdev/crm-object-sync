@@ -3,6 +3,8 @@ import 'dotenv/config';
 import { Authorization, PrismaClient } from '@prisma/client';
 import { PORT, getCustomerId } from './utils/utils';
 import { hubspotClient } from './clients';
+import { Client } from '@hubspot/api-client';
+import handleError from './utils/error';
 
 interface ExchangeProof {
   grant_type: string;
@@ -175,4 +177,42 @@ const getAccessToken = async (customerId: string): Promise<string> => {
   }
 };
 
-export { authUrl, exchangeForTokens, redeemCode, getAccessToken };
+function applyHubSpotAccessToken(accessToken: string): Client {
+  try {
+    hubspotClient.setAccessToken(accessToken);
+    return hubspotClient;
+  } catch (error) {
+    handleError(error, 'Error setting HubSpot access token');
+    throw new Error(
+      `Failed to apply access token: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+async function authenticateHubspotClient(): Promise<Client> {
+  try {
+    const customerId = getCustomerId();
+    const accessToken = await getAccessToken(customerId);
+    if (!accessToken) {
+      throw new Error(
+        `No access token returned for customer ID: ${customerId}`
+      );
+    }
+    return applyHubSpotAccessToken(accessToken);
+  } catch (error) {
+    handleError(error, 'Error retrieving HubSpot access token');
+    throw error instanceof Error
+      ? new Error(`Failed to authenticate HubSpot client: ${error.message}`)
+      : new Error(
+          'Failed to authenticate HubSpot client due to an unknown error'
+        );
+  }
+}
+
+export {
+  authUrl,
+  exchangeForTokens,
+  redeemCode,
+  getAccessToken,
+  authenticateHubspotClient
+};
