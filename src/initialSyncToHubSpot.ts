@@ -1,9 +1,8 @@
 import 'dotenv/config';
 
-import { Contacts, PrismaClient } from '@prisma/client';
+import { Contacts } from '@prisma/client';
 import { Client } from '@hubspot/api-client';
-import { exchangeForTokens, getAccessToken } from './auth';
-import { getCustomerId } from './utils/utils';
+import { getAccessToken } from './auth';
 import {
   BatchReadInputSimplePublicObjectId,
   BatchResponseSimplePublicObjectStatusEnum,
@@ -14,6 +13,7 @@ import {
   StandardError
 } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import { prisma, hubspotClient } from './clients';
+import { getCustomerId } from './utils/utils';
 
 interface KeyedContacts extends Contacts {
   [key: string]: any;
@@ -128,7 +128,7 @@ class BatchToBeSynced {
 
   removeKnownContactsFromBatch() {
     const emailsOfKnownContacts = this.#batchReadOutput.results.map(
-      (knownContact) => {
+      (knownContact: { properties: { email?: string } }) => {
         return knownContact.properties.email
           ? knownContact.properties.email
           : '';
@@ -239,7 +239,10 @@ class BatchToBeSynced {
 }
 
 const syncContactsToHubSpot = async () => {
-  const prisma = new PrismaClient();
+  console.log('started sync');
+  const accessToken = await getAccessToken(customerId);
+  hubspotClient.setAccessToken(accessToken);
+
   const localContacts = await prisma.contacts.findMany({
     where: { hs_object_id: null }
   });
@@ -255,6 +258,7 @@ const syncContactsToHubSpot = async () => {
   console.log(
     `===== Starting Sync Job for ${localContacts.length} contacts =====`
   );
+
   while (localContacts.length > 0) {
     let batch = splitBatchByMaxBatchSize(localContacts, start);
 

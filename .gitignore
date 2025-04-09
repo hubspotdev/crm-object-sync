@@ -26,7 +26,25 @@ coverage/*
 
 # Docker volumes and data
 **/postgres-data
+volumes/
+*.volume
 
 # IDE and OS specific files
 *.swp
 *.swo
+*.swn
+.env.local
+.env.*.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+prisma/*.db
+.prisma/
+
+# TypeScript
+*.tsbuildinfo
+.next

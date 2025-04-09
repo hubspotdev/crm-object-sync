@@ -12,18 +12,17 @@ RUN apt-get update -y && \
 # Copy package files
 COPY package*.json ./
 
-# Remove any existing prisma installations to avoid conflicts
-RUN rm -rf node_modules/@prisma node_modules/.prisma
-
-# Install dependencies with exact matching versions
-RUN npm install && \
-    npm install --save-exact prisma@4.16.2 @prisma/client@4.16.2
+# Install dependencies
+RUN npm install
 
 # Copy application files
 COPY . .
 
 # Generate Prisma client
-RUN npx prisma@4.16.2 generate
+RUN npx prisma generate
+
+# Copy the rest of the application files
+COPY . .
 
 # Expose port 3000
 EXPOSE 3000
