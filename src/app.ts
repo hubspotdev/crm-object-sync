@@ -89,8 +89,10 @@ app.get('/oauth-callback', async (req: Request, res: Response) => {
 });
 
 app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
+  const useVerboseCreateOrUpdate = req.query.verbose || 'false';
+  console.log('useVerboseCreateOrUpdate', useVerboseCreateOrUpdate);
   try {
-    const syncResults = await initialContactsSync();
+    const syncResults = await initialContactsSync(useVerboseCreateOrUpdate);
     res.send(syncResults);
   } catch (error) {
     handleError(error, 'Error during initial contacts sync');

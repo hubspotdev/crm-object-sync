@@ -161,7 +161,8 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
 };
 
 // Initial sync FROM HubSpot contacts TO (local) database
-const initialContactsSync = async () => {
+const initialContactsSync = async (useVerboseCreateOrUpdate: boolean) => {
+  useVerboseCreateOrUpdate = useVerboseCreateOrUpdate || false;
   console.log('started sync');
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
