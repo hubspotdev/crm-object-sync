@@ -4,8 +4,9 @@ import { Contacts, Prisma } from '@prisma/client';
 
 import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import { getAccessToken } from './auth';
-import { getCustomerId } from './utils/utils';
 import { hubspotClient, prisma } from './clients';
+
+import { getCustomerId } from './utils/utils';
 
 // Use verbose (but slower) create or update functionality
 const useVerboseCreateOrUpdate: boolean = false;
@@ -165,6 +166,9 @@ const initialContactsSync = async () => {
   console.log('started sync');
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
+
+  // Set the access token on the client
+  hubspotClient.setAccessToken(accessToken);
 
   // Track created/updated/upserted/any errors
   let jobRunResults: JobRunResults = {

@@ -7,24 +7,28 @@ services:
     build: .                # Build from local Dockerfile
     ports:
       - "3000:3000"        # Map container port 3000 to host port 3000
-    environment:
-      # Database connection string using service name 'db' as host
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/hubspot_sync
-      # HubSpot credentials from .env file
-      - CLIENT_ID=${CLIENT_ID}
-      - CLIENT_SECRET=${CLIENT_SECRET}
+    env_file:
+      - .env               # Load environment variables from .env file
     depends_on:
       db:
         condition: service_healthy   # Wait for database to be healthy before starting
     volumes:
       - .:/app                      # Mount current directory to /app for live code updates
       - /app/node_modules           # Anonymous volume to prevent overwriting node_modules
+    command: >
+      sh -c "
+        npx prisma db push --accept-data-loss &&
+        npm run dev
+      "
+    networks:
+      - app-network
+      - oauth-service_oauth-network  # Use only the OAuth service's oauth network
 
   # PostgreSQL database service
   db:
     image: postgres:15              # Use official PostgreSQL 15 image
     ports:
-      - "5432:5432"                # Map default PostgreSQL port
+      - "5433:5432"                # Map default PostgreSQL port
     environment:
       # Database initialization settings
       - POSTGRES_USER=postgres
@@ -39,40 +43,15 @@ services:
       interval: 5s                  # Check every 5 seconds
       timeout: 5s                   # Timeout after 5 seconds
       retries: 5                    # Retry 5 times before marking unhealthy
-
-  # Database initialization and setup service
-  setup:
-    build: .                        # Use same image as app
-    environment:
-      # Same database connection string as app
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/hubspot_sync
-      # Optional seeding flag with default value false
-      - SEED_DATABASE=${SEED_DATABASE:-false}
-    depends_on:
-      db:
-        condition: service_healthy  # Wait for database to be healthy
-    volumes:
-      - .:/app                     # Mount current directory
-      - /app/node_modules          # Anonymous volume for node_modules
-    command: >
-      sh -c "
-        # Wait for database to be fully ready
-        echo 'Waiting for database to be fully ready...' &&
-        sleep 15 &&
-        echo 'Running setup...' &&
-        # Generate Prisma client and run migrations
-        npx prisma@4.16.2 generate &&
-        npx prisma@4.16.2 migrate reset --force &&
-        npm run db-init &&
-        # Conditional seeding based on SEED_DATABASE environment variable
-        if [ \"$$SEED_DATABASE\" = \"true\" ]; then
-          echo 'Seeding database...' &&
-          npm run db-seed;
-        else
-          echo 'Skipping database seed...';
-        fi
-      "
+    networks:
+      - app-network
 
 # Named volumes declaration
 volumes:
   postgres_data:            # Persistent volume for database data
+
+networks:
+  app-network:
+    driver: bridge
+  oauth-service_oauth-network:
+    external: true          # Use the OAuth service's oauth network
