@@ -114,7 +114,7 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
     });
     updateResult = 'created';
   } catch (error) {
-    console.log(error);
+    
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const contactDataWithEmail = contactData as ContactsWithEmail; // Tell TS we always have an email address in this case
@@ -172,7 +172,7 @@ const initialContactsSync = async (useVerboseCreateOrUpdate: boolean) => {
   });
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
-
+  hubspotClient.setAccessToken(accessToken);
   // Track created/updated/upserted/any errors
   let jobRunResults: JobRunResults = {
     upsert: {
