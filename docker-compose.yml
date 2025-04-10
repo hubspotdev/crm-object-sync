@@ -17,8 +17,18 @@ services:
       db:
         condition: service_healthy   # Wait for database to be healthy before starting
     volumes:
-      - .:/app                      # Mount current directory to /app for live code updates
+      #- .:/app                      # Mount current directory to /app for live code updates
       - /app/node_modules           # Anonymous volume to prevent overwriting node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src/
+          ignore:
+            - node_modules/**
+        - action: rebuild
+          path: package.json
+
 
   # PostgreSQL database service
   db:
