@@ -6,6 +6,7 @@ import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts
 import { getAccessToken } from './auth';
 import { getCustomerId } from './utils/utils';
 import { hubspotClient, prisma } from './clients';
+import { logger } from './utils/logger';
 
 // Use verbose (but slower) create or update functionality
 const useVerboseCreateOrUpdate: boolean = false;
@@ -163,7 +164,12 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
 // Initial sync FROM HubSpot contacts TO (local) database
 const initialContactsSync = async (useVerboseCreateOrUpdate: boolean) => {
   useVerboseCreateOrUpdate = useVerboseCreateOrUpdate || false;
-  console.log('started sync');
+  logger.info({
+    type: 'HubSpot',
+    logMessage: {
+      message: 'Started sync'
+    }
+  });
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
 
