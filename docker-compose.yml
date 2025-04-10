@@ -22,7 +22,7 @@ services:
     develop:
       watch:
         - action: sync
-          path: src/**/*.ts
+          path: ./src
           target: /app/src/
           ignore:
             - node_modules/**
