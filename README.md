@@ -43,12 +43,14 @@ This project demonstrates how to:
 
 1. Clone the repo
 
-2. Create the .env file with these entries:
+2. If you haven't done so yet, please make sure to instal [Docker](https://www.docker.com/get-started/) on your local environment.
+
+3. Create the .env file with these entries:
      - DATABASE_URL - PostgreSQL connection string
      - OAUTH_SERVICE_URL - URL of the external OAuth service
      - SEED_DATABASE (Optional: set to true to seed the database)
 
-3. Ensure the [OAuth service](https://github.com/hubspotdev/oauth-service) is running and accessible. The OAuth service must have the following HubSpot scopes configured for this application to function properly:
+4. Ensure the [OAuth service](https://github.com/hubspotdev/oauth-service) is running and accessible. The OAuth service must have the following HubSpot scopes configured for this application to function properly:
 
 - `crm.objects.contacts.read` - View properties and other details about contacts
 - `crm.objects.contacts.write` - View properties and create, delete, and make changes to contacts
