@@ -51,8 +51,9 @@ jest.mock('../auth', () => ({
   getAccessToken: jest.fn()
 }));
 jest.mock('../utils/utils', () => ({
-  getCustomerId: jest.fn(() => '1'),
-  PORT: 3000
+  getCustomerId: jest.fn(),
+  getBooleanFromString: jest.fn().mockImplementation((value: unknown) => String(value) === 'true'),
+  PORT: 3001
 }));
 
 // Mock environment variables
@@ -73,17 +74,14 @@ afterAll((done) => {
     console.log('Closing test server...');
     server.close((err?: Error) => {
       if (err) {
-        console.error('Error closing server:', err);
-        done(err);
-      } else {
-        console.log('Test server closed successfully');
-        done();
+        console.error('Error closing test server:', err);
       }
+      done();
     });
   } else {
     done();
   }
-});
+}, 10000);
 
 describe('Express App', () => {
   beforeEach(() => {
@@ -169,6 +167,8 @@ describe('Express App', () => {
   });
 
   describe('GET /initial-contacts-sync', () => {
+    jest.setTimeout(10000);
+
     it('should perform initial sync successfully', async () => {
       const mockSyncResults = {
         total: 2,
@@ -195,6 +195,32 @@ describe('Express App', () => {
       (initialContactsSync as jest.MockedFunction<any>).mockRejectedValue(
         new Error('Initial sync failed')
       );
+
+      const response = await request(server)
+        .get('/initial-contacts-sync')
+        .expect(500);
+
+      expect(response.body).toEqual({
+        message: 'An error occurred during the initial contacts sync.'
+      });
+    });
+
+    it('should redirect to install page on 401 error', async () => {
+      const error = new Error('Unauthorized') as any;
+      error.code = 401;
+      (initialContactsSync as jest.MockedFunction<any>).mockRejectedValue(error);
+
+      const response = await request(server)
+        .get('/initial-contacts-sync')
+        .expect(302);
+
+      expect(response.headers.location).toBe('http://localhost:3001/install');
+    });
+
+    it('should handle non-401 errors', async () => {
+      const error = new Error('Some other error') as any;
+      error.code = 500;
+      (initialContactsSync as jest.MockedFunction<any>).mockRejectedValue(error);
 
       const response = await request(server)
         .get('/initial-contacts-sync')

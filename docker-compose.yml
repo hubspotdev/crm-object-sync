@@ -13,16 +13,21 @@ services:
       db:
         condition: service_healthy   # Wait for database to be healthy before starting
     volumes:
-      - .:/app                      # Mount current directory to /app for live code updates
+      - .:/app
       - /app/node_modules           # Anonymous volume to prevent overwriting node_modules
-    command: >
-      sh -c "
-        npx prisma db push --accept-data-loss &&
-        npm run dev
-      "
     networks:
       - app-network
       - oauth-service_oauth-network  # Use only the OAuth service's oauth network
+    develop:
+       watch:
+         - action: sync
+           path: ./src
+           target: /app/src/
+           ignore:
+             - node_modules/**
+         - action: rebuild
+           path: package.json
+
 
   # PostgreSQL database service
   db:

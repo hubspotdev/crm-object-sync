@@ -7,6 +7,7 @@ import { getAccessToken } from './auth';
 import { hubspotClient, prisma } from './clients';
 
 import { getCustomerId } from './utils/utils';
+import { logger } from './utils/logger';
 
 // Use verbose (but slower) create or update functionality
 const useVerboseCreateOrUpdate: boolean = false;
@@ -114,7 +115,6 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
     });
     updateResult = 'created';
   } catch (error) {
-    console.log(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const contactDataWithEmail = contactData as ContactsWithEmail; // Tell TS we always have an email address in this case
@@ -162,8 +162,14 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
 };
 
 // Initial sync FROM HubSpot contacts TO (local) database
-const initialContactsSync = async () => {
-  console.log('started sync');
+const initialContactsSync = async (useVerboseCreateOrUpdate: boolean) => {
+  useVerboseCreateOrUpdate = useVerboseCreateOrUpdate || false;
+  logger.info({
+    type: 'HubSpot',
+    logMessage: {
+      message: 'Started sync'
+    }
+  });
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
 
