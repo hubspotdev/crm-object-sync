@@ -29,7 +29,7 @@ model Companies {
 model Authorization {
   customerId   String    @id @db.VarChar(255)
   hsPortalId   String    @db.VarChar(255)
-  accessToken  String    @db.VarChar(255)
+  accessToken  String    @db.VarChar(512)
   refreshToken String    @db.VarChar(255)
   expiresIn    Int?
   expiresAt    DateTime? @db.Timestamp(6)
