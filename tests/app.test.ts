@@ -10,16 +10,16 @@ import {
 } from '@jest/globals';
 import request from 'supertest';
 import { Server } from 'http';
-import { app } from '../app';
-import { prisma } from '../clients';
-import { syncContactsToHubSpot } from '../initialSyncToHubSpot';
-import { initialContactsSync } from '../initialSyncFromHubSpot';
-import { getAccessToken } from '../auth';
-import { getCustomerId } from '../utils/utils';
-import shutdown from '../utils/shutdown';
+import { app } from '../src/app';
+import { prisma } from '../src/clients';
+import { syncContactsToHubSpot } from '../src/initialSyncToHubSpot';
+import { initialContactsSync } from '../src/initialSyncFromHubSpot';
+import { getAccessToken } from '../src/auth';
+import { getCustomerId } from '../src/utils/utils';
+import shutdown from '../src/utils/shutdown';
 
 // Mock all external dependencies
-jest.mock('../clients', () => ({
+jest.mock('../src/clients', () => ({
   prisma: {
     contacts: {
       findMany: jest.fn(),
@@ -45,12 +45,12 @@ jest.mock('../clients', () => ({
   }
 }));
 
-jest.mock('../initialSyncToHubSpot');
-jest.mock('../initialSyncFromHubSpot');
-jest.mock('../auth', () => ({
+jest.mock('../src/initialSyncToHubSpot');
+jest.mock('../src/initialSyncFromHubSpot');
+jest.mock('../src/auth', () => ({
   getAccessToken: jest.fn()
 }));
-jest.mock('../utils/utils', () => ({
+jest.mock('../src/utils/utils', () => ({
   getCustomerId: jest.fn(),
   getBooleanFromString: jest.fn().mockImplementation((value: unknown) => String(value) === 'true'),
   PORT: 3001
