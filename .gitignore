@@ -1,8 +1,50 @@
-node_modules
-# Keep environment variables out of version control
+# Environment
 .env
+*.env.docker
+
+# Dependencies
+node_modules/
+
+# Docker
+.docker/
+docker-compose.override.yml
+postgres_data/
+
+# Build & Logs
+dist/
+*.log
+
+# IDE & OS
+.DS_Store
+.vscode/
+.idea/
 
 # Test coverage reports
 coverage/
 coverage/*
 *.lcov
+
+# Docker volumes and data
+**/postgres-data
+volumes/
+*.volume
+
+# IDE and OS specific files
+*.swp
+*.swo
+*.swn
+.env.local
+.env.*.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+prisma/*.db
+.prisma/
+
+# TypeScript
+*.tsbuildinfo
+.next

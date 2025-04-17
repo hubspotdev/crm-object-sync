@@ -1,0 +1,59 @@
+# Docker Compose version
+version: '3.8'
+
+services:
+  # Main application service for running the Node.js app
+  app:
+    build: .                # Build from local Dockerfile
+    ports:
+      - "3000:3000"        # Map container port 3000 to host port 3000
+    env_file:
+      - .env               # Load environment variables from .env file
+    depends_on:
+      db:
+        condition: service_healthy   # Wait for database to be healthy before starting
+    volumes:
+      #- .:/app                      # Mount current directory to /app for live code updates
+      - /app/node_modules           # Anonymous volume to prevent overwriting node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src/
+          ignore:
+            - node_modules/**
+        - action: rebuild
+          path: package.json
+
+
+  # PostgreSQL database service
+  db:
+    image: postgres:15              # Use official PostgreSQL 15 image
+    ports:
+      - "5433:5432"                # Map default PostgreSQL port
+    environment:
+      # Database initialization settings
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hubspot_sync
+    volumes:
+      # Named volume for persistent database storage
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Check if database is ready to accept connections
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s                  # Check every 5 seconds
+      timeout: 5s                   # Timeout after 5 seconds
+      retries: 5                    # Retry 5 times before marking unhealthy
+    networks:
+      - app-network
+
+# Named volumes declaration
+volumes:
+  postgres_data:            # Persistent volume for database data
+
+networks:
+  app-network:
+    driver: bridge
+  oauth-service_oauth-network:
+    external: true          # Use the OAuth service's oauth network
