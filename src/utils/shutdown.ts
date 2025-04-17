@@ -1,21 +1,48 @@
 import disconnectPrisma from '../../prisma/disconnect';
 import { server } from '../app';
+import { logger } from './logger';
 
 async function shutdown(): Promise<void> {
   try {
-    console.log('Initiating graceful shutdown...');
+    logger.info({
+      type: 'Server',
+      context: 'Shutdown',
+      logMessage: {
+        message: 'Initiating graceful shutdown'
+      }
+    });
 
     const closeServerPromise = new Promise<void>((resolve, reject) => {
       if (!server) {
-        console.log('No server instance to close.');
+        logger.info({
+          type: 'Server',
+          context: 'Shutdown',
+          logMessage: {
+            message: 'No server instance to close'
+          }
+        });
         resolve();
         return;
       }
 
       server.close((err) => {
-        console.log('Server close callback called.');
+        logger.info({
+          type: 'Server',
+          context: 'Shutdown',
+          logMessage: {
+            message: 'Server close callback called'
+          }
+        });
+
         if (err) {
-          console.error('Error closing the server:', err);
+          logger.error({
+            type: 'Server',
+            context: 'Shutdown',
+            logMessage: {
+              message: 'Error closing the server',
+              stack: err instanceof Error ? err.stack : undefined
+            }
+          });
           reject(err);
         } else {
           resolve();
@@ -24,7 +51,13 @@ async function shutdown(): Promise<void> {
 
       // Set a timeout in case the server does not close within a reasonable time
       setTimeout(() => {
-        console.warn('Forcing server shutdown after timeout.');
+        logger.warn({
+          type: 'Server',
+          context: 'Shutdown',
+          logMessage: {
+            message: 'Forcing server shutdown after timeout'
+          }
+        });
         resolve();
       }, 5000);
     });
@@ -32,20 +65,53 @@ async function shutdown(): Promise<void> {
     await Promise.all([
       closeServerPromise
         .then(() => {
-          console.log('HTTP server closed successfully.');
+          logger.info({
+            type: 'Server',
+            context: 'Shutdown',
+            logMessage: {
+              message: 'HTTP server closed successfully'
+            }
+          });
         })
         .catch((err) => {
-          console.error('Error during server close:', err);
+          logger.error({
+            type: 'Server',
+            context: 'Shutdown',
+            logMessage: {
+              message: 'Error during server close',
+              stack: err instanceof Error ? err.stack : undefined
+            }
+          });
         }),
-      disconnectPrisma().catch((err) =>
-        console.error('Error during Prisma disconnection:', err)
-      )
+      disconnectPrisma().catch((err) => {
+        logger.error({
+          type: 'Database',
+          context: 'Shutdown',
+          logMessage: {
+            message: 'Error during Prisma disconnection',
+            stack: err instanceof Error ? err.stack : undefined
+          }
+        });
+      })
     ]);
 
-    console.log('Graceful shutdown complete.');
+    logger.info({
+      type: 'Server',
+      context: 'Shutdown',
+      logMessage: {
+        message: 'Graceful shutdown complete'
+      }
+    });
     process.exit(0);
   } catch (err) {
-    console.error('Error during shutdown:', err);
+    logger.error({
+      type: 'Server',
+      context: 'Shutdown',
+      logMessage: {
+        message: 'Error during shutdown',
+        stack: err instanceof Error ? err.stack : undefined
+      }
+    });
     process.exit(1);
   }
 }

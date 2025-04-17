@@ -1,4 +1,5 @@
 const OAUTH_SERVICE_URL = process.env.OAUTH_SERVICE_URL || 'http://oauth-service:3001';
+import { logger } from './logger';
 
 export async function getHubSpotToken(customerId: string): Promise<string> {
   try {
@@ -9,7 +10,15 @@ export async function getHubSpotToken(customerId: string): Promise<string> {
     }
     throw new Error(data.errorMessage || 'Failed to get access token');
   } catch (error) {
-    console.error('Failed to get token:', error);
+    logger.error({
+      type: 'OAuth',
+      context: 'Token Retrieval',
+      logMessage: {
+        message: 'Failed to get token',
+        data: { customerId },
+        stack: error instanceof Error ? error.stack : undefined
+      }
+    });
     throw error;
   }
 }

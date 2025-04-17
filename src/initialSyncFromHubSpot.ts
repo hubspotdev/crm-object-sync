@@ -58,81 +58,180 @@ interface ContactsWithEmail extends SimplePublicObject {
 // Update function 1 - use upsert to create or update records
 // Faster but less verbose tracking of created vs. updated
 const upsertContact = async (contactData: SimplePublicObject) => {
-  let upsertRecord: Contacts;
-  let upsertResult: string;
-  if (contactData.properties.email) {
-    // Create the contact if no matching email
-    // On matching email, update the HS ID but nothing else
-    upsertRecord = await prisma.contacts.upsert({
-      where: {
-        email: contactData.properties.email
-      },
-      update: {
-        // add the hs ID but don't update anything else
-        hs_object_id: contactData.id
-      },
-      create: {
-        email: contactData.properties.email,
-        first_name: contactData.properties.firstname,
-        last_name: contactData.properties.lastname,
-        hs_object_id: contactData.id
+  try {
+    logger.info({
+      type: 'Database',
+      context: 'Contact Upsert',
+      logMessage: {
+        message: 'Attempting to upsert contact',
+        data: {
+          email: contactData.properties.email,
+          hubspotId: contactData.id
+        }
       }
     });
-    upsertResult = 'upsert';
-  } else {
-    // no email, create without email
-    upsertRecord = await prisma.contacts.create({
-      data: {
-        first_name: contactData.properties.firstname,
-        last_name: contactData.properties.lastname,
-        hs_object_id: contactData.id
-      }
-    });
-    upsertResult = 'created';
-  }
-  let result: CreateUpdateUpsertResult = {
-    recordDetails: upsertRecord,
-    updateResult: upsertResult
-  };
 
-  return result;
+    let upsertRecord: Contacts;
+    let upsertResult: string;
+    if (contactData.properties.email) {
+      // Create the contact if no matching email
+      // On matching email, update the HS ID but nothing else
+      upsertRecord = await prisma.contacts.upsert({
+        where: {
+          email: contactData.properties.email
+        },
+        update: {
+          // add the hs ID but don't update anything else
+          hs_object_id: contactData.id
+        },
+        create: {
+          email: contactData.properties.email,
+          first_name: contactData.properties.firstname,
+          last_name: contactData.properties.lastname,
+          hs_object_id: contactData.id
+        }
+      });
+      upsertResult = 'upsert';
+      logger.info({
+        type: 'Database',
+        context: 'Contact Upsert',
+        logMessage: {
+          message: 'Successfully upserted contact',
+          data: {
+            email: contactData.properties.email,
+            hubspotId: contactData.id,
+            result: upsertResult
+          }
+        }
+      });
+    } else {
+      // no email, create without email
+      upsertRecord = await prisma.contacts.create({
+        data: {
+          first_name: contactData.properties.firstname,
+          last_name: contactData.properties.lastname,
+          hs_object_id: contactData.id
+        }
+      });
+      upsertResult = 'created';
+      logger.info({
+        type: 'Database',
+        context: 'Contact Create',
+        logMessage: {
+          message: 'Successfully created contact without email',
+          data: {
+            hubspotId: contactData.id,
+            result: upsertResult
+          }
+        }
+      });
+    }
+    let result: CreateUpdateUpsertResult = {
+      recordDetails: upsertRecord,
+      updateResult: upsertResult
+    };
+
+    return result;
+  } catch (error) {
+    logger.error({
+      type: 'Database',
+      context: 'Contact Upsert',
+      logMessage: {
+        message: 'Failed to upsert contact',
+        data: {
+          email: contactData.properties.email,
+          hubspotId: contactData.id
+        },
+        stack: error instanceof Error ? error.stack : undefined
+      }
+    });
+    throw error;
+  }
 };
 
 // Update function 2 - Try to create the record, fall back to update if that fails
 // Slower and will result in DB errors, but explicit tracking of created
 const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
-  let prismaRecord: Contacts;
-  let updateResult: string;
-
   try {
-    prismaRecord = await prisma.contacts.create({
-      data: {
-        email: contactData.properties.email,
-        first_name: contactData.properties.firstname,
-        last_name: contactData.properties.lastname,
-        hs_object_id: contactData.id
+    logger.info({
+      type: 'Database',
+      context: 'Verbose Contact Create/Update',
+      logMessage: {
+        message: 'Attempting to create contact',
+        data: {
+          email: contactData.properties.email,
+          hubspotId: contactData.id
+        }
       }
     });
-    updateResult = 'created';
-  } catch (error) {
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        const contactDataWithEmail = contactData as ContactsWithEmail; // Tell TS we always have an email address in this case
-        // failed on unique property (i.e. email)
-        // Update  existing record by email, just add HS record id to record
-        prismaRecord = await prisma.contacts.update({
-          where: {
-            email: contactDataWithEmail.properties.email
-          },
-          data: {
-            // add the hs ID but don't update anything else
+    let prismaRecord: Contacts;
+    let updateResult: string;
+
+    try {
+      prismaRecord = await prisma.contacts.create({
+        data: {
+          email: contactData.properties.email,
+          first_name: contactData.properties.firstname,
+          last_name: contactData.properties.lastname,
+          hs_object_id: contactData.id
+        }
+      });
+      updateResult = 'created';
+    } catch (error) {
+
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          logger.info({
+            type: 'Database',
+            context: 'Verbose Contact Create/Update',
+            logMessage: {
+              message: 'Contact exists, updating HubSpot ID',
+              data: {
+                email: contactData.properties.email,
+                hubspotId: contactData.id
+              }
+            }
+          });
+          const contactDataWithEmail = contactData as ContactsWithEmail; // Tell TS we always have an email address in this case
+          // failed on unique property (i.e. email)
+          // Update  existing record by email, just add HS record id to record
+          prismaRecord = await prisma.contacts.update({
+            where: {
+              email: contactDataWithEmail.properties.email
+            },
+            data: {
+              // add the hs ID but don't update anything else
+              hs_object_id: contactData.id
+            }
+          });
+          updateResult = 'hsID_updated';
+        } else {
+          logger.error({
+            type: 'Database',
+            context: 'Verbose Contact Create/Update',
+            logMessage: {
+              message: 'Prisma error during contact creation',
+              data: {
+                email: contactData.properties.email,
+                hubspotId: contactData.id,
+                errorCode: error.code
+              },
+              stack: error.stack
+            }
+          });
+          // some other known error but not existing email
+          prismaRecord = {
+            id: -1,
+            email: contactData.properties.email,
+            first_name: contactData.properties.firstname,
+            last_name: contactData.properties.lastname,
             hs_object_id: contactData.id
-          }
-        });
-        updateResult = 'hsID_updated';
+          };
+          updateResult = error.code; // log Prisma error code, will be tracked as error in results
+        }
       } else {
-        // some other known error but not existing email
+        // Any other failed create result
         prismaRecord = {
           id: -1,
           email: contactData.properties.email,
@@ -140,26 +239,30 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
           last_name: contactData.properties.lastname,
           hs_object_id: contactData.id
         };
-        updateResult = error.code; // log Prisma error code, will be tracked as error in results
+        updateResult = 'failed';
       }
-    } else {
-      // Any other failed create result
-      prismaRecord = {
-        id: -1,
-        email: contactData.properties.email,
-        first_name: contactData.properties.firstname,
-        last_name: contactData.properties.lastname,
-        hs_object_id: contactData.id
-      };
-      updateResult = 'failed';
     }
-  }
 
-  let result: CreateUpdateUpsertResult = {
-    recordDetails: prismaRecord,
-    updateResult: updateResult
-  };
-  return result;
+    let result: CreateUpdateUpsertResult = {
+      recordDetails: prismaRecord,
+      updateResult: updateResult
+    };
+    return result;
+  } catch (error) {
+    logger.error({
+      type: 'Database',
+      context: 'Verbose Contact Create/Update',
+      logMessage: {
+        message: 'Unexpected error during contact creation/update',
+        data: {
+          email: contactData.properties.email,
+          hubspotId: contactData.id
+        },
+        stack: error instanceof Error ? error.stack : undefined
+      }
+    });
+    throw error;
+  }
 };
 
 // Initial sync FROM HubSpot contacts TO (local) database
