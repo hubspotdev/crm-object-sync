@@ -39,56 +39,10 @@ app.get('/sync-contacts', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/', async (req: Request, res: Response) => {
-  try {
-    const accessToken = await getAccessToken(getCustomerId());
-    res.send(accessToken);
-  } catch (error: unknown) {
-    if (typeof error === 'object' && error && 'statusCode' in error && error.statusCode === 401) {
-      res.redirect("/api/install");
-    }
-    handleError(error, 'Error fetching access token');
-    res
-      .status(500)
-      .json({ message: 'An error occurred while fetching the access token.' });
-  }
-});
-
-app.get('/oauth-callback', async (req: Request, res: Response) => {
-  const code = req.query.code;
-  if (code) {
-    try {
-      const authInfo = await redeemCode(code.toString());
-      const accessToken = authInfo.accessToken;
-      logger.info({
-        type: 'HubSpot',
-        logMessage: {
-          message: 'OAuth complete!'
-        }
-      });
-      res.redirect(`http://localhost:${PORT}/`);
-    } catch (error: any) {
-      handleError(error, 'Error redeeming code during OAuth');
-      res.redirect(
-        `/?errMessage=${error.message || 'An error occurred during the OAuth process.'}`
-      );
-    }
-  } else {
-    logger.error({
-      type: 'HubSpot',
-      logMessage: {
-        message: 'Error: code parameter is missing.'
-      }
-    });
-    res
-      .status(400)
-      .json({ message: 'Code parameter is missing in the query string.' });
-  }
-});
 
 app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
-  
-  const useVerboseCreateOrUpdate = req.query.verbose || 'false';
+  const useVerboseCreateOrUpdate = (req.query.verbose === 'true');
+
   logger.info({
     type: 'HubSpot',
     logMessage: {
@@ -110,7 +64,8 @@ app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
             message: 'Unauthorized error during initial contacts sync. Redirecting to install page.'
           }
         });
-        res.redirect("/api/install");
+        res.redirect("http://localhost:3001/install");
+
         return;
       }
       handleError(error, 'Error during initial contacts sync');

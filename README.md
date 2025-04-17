@@ -3,7 +3,6 @@
 CRM Object Sync repository demonstrates best practices for syncing CRM contact records between HubSpot and external applications. Built with Docker, Node.js, and PostgreSQL for seamless deployment and development.
 
 ## Table of Contents
-
 - [What this project does](#what-this-project-does)
 - [Why is this project useful](#why-is-this-project-useful)
 - [Getting started with the project](#getting-started-with-the-project)
@@ -11,7 +10,6 @@ CRM Object Sync repository demonstrates best practices for syncing CRM contact r
 - [Endpoints](#endpoints)
   - [Synchronization Endpoints](#synchronization-endpoints)
 - [Available Scripts](#available-scripts)
-- [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
   - [Core](#core)
   - [Development](#development)
@@ -73,7 +71,7 @@ docker-compose up
 
 ## Endpoints:
 
-### Contact Management
+### Synchronization Endpoints
 
 - `GET /initial-contacts-sync`: Synchronize contacts from HubSpot to the local database.
 

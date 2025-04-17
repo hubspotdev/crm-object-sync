@@ -5,6 +5,8 @@ import { Contacts, Prisma } from '@prisma/client';
 import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import { getAccessToken } from './auth';
 import { hubspotClient, prisma } from './clients';
+
+import { getCustomerId } from './utils/utils';
 import { logger } from './utils/logger';
 
 // Use verbose (but slower) create or update functionality

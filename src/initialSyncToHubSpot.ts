@@ -6,6 +6,7 @@ import { getAccessToken } from './auth';
 import {
   BatchReadInputSimplePublicObjectId,
   BatchResponseSimplePublicObjectStatusEnum,
+  SimplePublicObjectBatchInput,
   SimplePublicObjectInputForCreate,
   BatchResponseSimplePublicObjectWithErrors,
   BatchResponseSimplePublicObject,
@@ -17,6 +18,8 @@ import { getCustomerId } from './utils/utils';
 interface KeyedContacts extends Contacts {
   [key: string]: any;
 }
+
+const customerId = getCustomerId();
 
 const MAX_BATCH_SIZE = 100;
 
@@ -108,7 +111,9 @@ class BatchToBeSynced {
   }
 
   async batchRead() {
-    await authenticateHubspotClient();
+    const accessToken = await getAccessToken(customerId);
+    this.hubspotClient.setAccessToken(accessToken);
+
     try {
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs
@@ -265,7 +270,7 @@ const syncContactsToHubSpot = async () => {
 
     if (syncCohort.mapOfEmailsToNativeIds.size === 0) {
       // take the next set of 100 contacts
-      console.log('all contacts were known, no need to create');
+      console.log('all contacts where known, no need to create');
     } else {
       await syncCohort.sendNetNewContactsToHubspot();
 
