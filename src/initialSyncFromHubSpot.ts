@@ -3,7 +3,11 @@ import 'dotenv/config';
 import { Contacts, Prisma } from '@prisma/client';
 
 import { SimplePublicObject } from '@hubspot/api-client/lib/codegen/crm/contacts';
+<<<<<<< HEAD
 import { getAccessToken } from './auth';
+=======
+
+>>>>>>> origin/main
 import { hubspotClient, prisma } from './clients';
 import { logger } from './utils/logger';
 
@@ -161,6 +165,7 @@ const verboseCreateOrUpdate = async (contactData: SimplePublicObject) => {
 };
 
 // Initial sync FROM HubSpot contacts TO (local) database
+<<<<<<< HEAD
 const initialContactsSync = async (useVerboseCreateOrUpdate: boolean) => {
   useVerboseCreateOrUpdate = useVerboseCreateOrUpdate || false;
   logger.info({
@@ -172,6 +177,13 @@ const initialContactsSync = async (useVerboseCreateOrUpdate: boolean) => {
   const customerId = getCustomerId();
   const accessToken = await getAccessToken(customerId);
   hubspotClient.setAccessToken(accessToken);
+=======
+const initialContactsSync = async () => {
+  console.log('started sync');
+  // const customerId = getCustomerId();
+  // const accessToken = await getAccessToken(customerId);
+
+>>>>>>> origin/main
   // Track created/updated/upserted/any errors
   let jobRunResults: JobRunResults = {
     upsert: {

@@ -1,0 +1,118 @@
+name: Update Template Files
+
+on:
+  repository_dispatch:
+    types: [update-templates]
+
+jobs:
+  update-templates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup GitHub directories
+        run: |
+          mkdir -p .github/ISSUE_TEMPLATE
+          mkdir -p .github/pull_request_template
+
+      - name: Download PR Template
+        if: github.event.client_payload.pr_template_updated == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            try {
+              // Log that we're starting the request
+              console.log('Attempting to fetch PR-Template.md from CODE-Hub repository...');
+
+              // Make a direct request using the octokit request method
+              const response = await github.request('GET /repos/{owner}/{repo}/contents/{path}', {
+                owner: 'hubspotdev',
+                repo: 'CODE-Hub',
+                path: 'PR-Template.md',
+                ref: 'main',
+                headers: {
+                  'Accept': 'application/vnd.github.v3.raw'
+                }
+              });
+
+              console.log('Successfully retrieved the file!');
+
+              // Write the content
+              const fs = require('fs');
+              fs.writeFileSync('.github/pull_request_template.md', response.data);
+
+              console.log('Successfully wrote template files');
+            } catch (error) {
+              console.error('Error details:');
+              console.error(`Status: ${error.status}`);
+              console.error(`Message: ${error.message}`);
+              console.error(`Request URL: ${error.request?.url || 'N/A'}`);
+              if (error.response?.data) {
+                console.error('Response data:', JSON.stringify(error.response.data));
+              }
+              throw error;
+            }
+
+      - name: Download Bug Template
+        if: github.event.client_payload.bug_template_updated == 'true'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}  # Use the same PAT here
+          script: |
+            const response = await github.rest.repos.getContent({
+              owner: 'hubspotdev',
+              repo: 'CODE-Hub',
+              path: 'PR-Template.md',
+              ref: 'main'
+            });
+
+            const content = Buffer.from(response.data.content, 'base64').toString();
+            const fs = require('fs');
+
+            fs.writeFileSync('.github/ISSUE_TEMPLATE/bug_report.md', content);
+
+      - name: Check token permissions
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            try {
+              console.log('Checking token permissions...');
+              const { data } = await github.rest.users.getAuthenticated();
+              console.log(`Authenticated as: ${data.login}`);
+
+              // Try to list the repos to see if we have access to the CODE-Hub repo
+              const repos = await github.rest.repos.get({
+                owner: 'hubspotdev',
+                repo: 'CODE-Hub'
+              });
+              console.log('Successfully accessed CODE-Hub repository information');
+              console.log(`Repository visibility: ${repos.data.visibility}`);
+              console.log(`Default branch: ${repos.data.default_branch}`);
+            } catch (error) {
+              console.error('Error checking permissions:');
+              console.error(`Status: ${error.status}`);
+              console.error(`Message: ${error.message}`);
+              throw error;
+            }
+
+      - name: Create Pull Request
+        if: success()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GH_PAT }}
+          commit-message: Update GitHub templates from CODE-Hub
+          title: 'chore: Update GitHub templates from CODE-Hub'
+          body: |
+            This PR updates the GitHub templates from CODE-Hub repository.
+
+            - Updates triggered by template changes
+            - Automated PR created by GitHub Actions
+          branch: update-github-templates
+          base: main
+          delete-branch: true
