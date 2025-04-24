@@ -12,8 +12,10 @@ services:
     depends_on:
       db:
         condition: service_healthy   # Wait for database to be healthy before starting
+      oauth-check:
+        condition: service_healthy    # Wait for OAuth service to be healthy
     volumes:
-      - /app/node_modules           # Anonymous volume to prevent overwriting node_modules
+      - /app/node_modules
     networks:
       - app-network
       - oauth-service_oauth-network  # Use only the OAuth service's oauth network
@@ -27,6 +29,19 @@ services:
          - action: rebuild
            path: package.json
 
+  oauth-check:
+    image: curlimages/curl:latest
+    command: sleep infinity
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f ${OAUTH_SERVICE_URL}/api/get-install-url"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - .env
+    networks:
+      - oauth-service_oauth-network
 
   # PostgreSQL database service
   db:
