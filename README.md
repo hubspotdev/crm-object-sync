@@ -11,7 +11,6 @@ CRM Object Sync repository demonstrates best practices for syncing CRM contact r
 - [Endpoints](#endpoints)
   - [Synchronization Endpoints](#synchronization-endpoints)
 - [Available Scripts](#available-scripts)
-- [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
   - [Core](#core)
   - [Development](#development)
@@ -73,7 +72,7 @@ docker-compose up
 
 ## Endpoints:
 
-### Contact Management
+### Synchronization Endpoints
 
 - `GET /initial-contacts-sync`: Synchronize contacts from HubSpot to the local database.
 
