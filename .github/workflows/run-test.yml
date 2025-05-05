@@ -1,0 +1,48 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgres://postgres:password@localhost:5432/testdb
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Wait for DB to be ready
+        run: |
+          echo "Waiting for PostgreSQL to be ready..."
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 && break
+            sleep 2
+          done
+
+      - name: Run tests
+        run: npm test
