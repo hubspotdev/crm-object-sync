@@ -1,61 +1,93 @@
-# Docker Compose version
-version: '3.8'
+# Docker Compose configuration for CRM Object Sync Service
+# This file defines the production environment setup
 
+version: '3.8'
 services:
-  # Main application service for running the Node.js app
+  # Main application service
   app:
-    build: .                # Build from local Dockerfile
+    build:
+      context: .
+      target: production  # Uses production target from Dockerfile
+    command: npm run start
     ports:
-      - "3000:3000"        # Map container port 3000 to host port 3000
+      - "3000:3000"  # Maps container port 3000 to host port 3000
     env_file:
-      - .env               # Load environment variables from .env file
+      - .env  # Loads environment variables from .env file
+    environment:
+      NODE_ENV: production
     depends_on:
       db:
-        condition: service_healthy   # Wait for database to be healthy before starting
-    volumes:
-      - /app/node_modules           # Anonymous volume to prevent overwriting node_modules
+        condition: service_healthy  # Waits for database to be ready
+      prisma-migrate:
+        condition: service_completed_successfully  # Waits for migrations to complete
+      oauth-check:
+        condition: service_healthy  # Waits for OAuth service to be ready
     networks:
-      - app-network
-      - oauth-service_oauth-network  # Use only the OAuth service's oauth network
-    develop:
-       watch:
-         - action: sync
-           path: ./src
-           target: /app/src/
-           ignore:
-             - node_modules/**
-         - action: rebuild
-           path: package.json
+      - default  # Internal network for app and database communication
+      - oauth-service_oauth-network  # External network for OAuth service
+    restart: always  # Automatically restarts the container if it crashes
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/contacts || exit 1"]  # Checks if /contacts endpoint is accessible
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
+  # Database migration service - runs once before app starts
+  prisma-migrate:
+    build:
+      context: .
+      target: production
+    command: npx prisma migrate deploy  # Runs database migrations
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy  # Waits for database to be ready
+    networks:
+      - default
+
+  # OAuth service health check
+  oauth-check:
+    image: curlimages/curl:latest
+    command: sleep infinity  # Keeps container running for health checks
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f ${OAUTH_SERVICE_URL}/api/get-install-url"]  # Verifies OAuth service is accessible
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    env_file:
+      - .env
+    networks:
+      - oauth-service_oauth-network
 
   # PostgreSQL database service
   db:
-    image: postgres:15              # Use official PostgreSQL 15 image
+    image: postgres:15
     ports:
-      - "5433:5432"                # Map default PostgreSQL port
+      - "5433:5432"  # Maps container port 5432 to host port 5433
     environment:
-      # Database initialization settings
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=hubspot_sync
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      # Named volume for persistent database storage
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data  # Persists database data
     healthcheck:
-      # Check if database is ready to accept connections
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s                  # Check every 5 seconds
-      timeout: 5s                   # Timeout after 5 seconds
-      retries: 5                    # Retry 5 times before marking unhealthy
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]  # Checks if database is accepting connections
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
-      - app-network
+      - default
 
-# Named volumes declaration
+# Volume definitions
 volumes:
-  postgres_data:            # Persistent volume for database data
+  postgres_data:  # Named volume for database persistence
 
+# Network definitions
 networks:
-  app-network:
+  default:  # Internal network for service communication
     driver: bridge
-  oauth-service_oauth-network:
-    external: true          # Use the OAuth service's oauth network
+  oauth-service_oauth-network:  # External network for OAuth service
+    external: true
