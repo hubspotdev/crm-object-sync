@@ -14,51 +14,74 @@ import { app } from '../src/app';
 import { prisma } from '../src/clients';
 import { syncContactsToHubSpot } from '../src/initialSyncToHubSpot';
 import { initialContactsSync } from '../src/initialSyncFromHubSpot';
-import { redeemCode, getAccessToken, authUrl } from '../src/auth';
+import { getAccessToken } from '../src/auth';
 import { getCustomerId } from '../src/utils/utils';
+import shutdown from '../src/utils/shutdown';
 
 // Mock all external dependencies
 jest.mock('../src/clients', () => ({
   prisma: {
     contacts: {
-      findMany: jest.fn()
+      findMany: jest.fn(),
+      update: jest.fn()
+    },
+    syncJobs: {
+      create: jest.fn(),
+      update: jest.fn()
     }
   },
   hubspotClient: {
-    oauth: {
-      getAuthorizationUrl: jest.fn(),
-      defaultApi: {
-        createToken: jest.fn()
+    setAccessToken: jest.fn(),
+    crm: {
+      contacts: {
+        getAll: jest.fn(),
+        batchApi: {
+          read: jest.fn(),
+          create: jest.fn()
+        }
       }
-    }
+    },
+    apiRequest: jest.fn()
   }
 }));
 
 jest.mock('../src/initialSyncToHubSpot');
 jest.mock('../src/initialSyncFromHubSpot');
 jest.mock('../src/auth', () => ({
-  authUrl: 'https://app.hubspot.com/oauth/authorize?mock=true',
-  redeemCode: jest.fn(),
   getAccessToken: jest.fn()
 }));
-jest.mock('../src/utils/utils');
+jest.mock('../src/utils/utils', () => ({
+  getCustomerId: jest.fn(),
+  getBooleanFromString: jest.fn().mockImplementation((value: unknown) => String(value) === 'true'),
+  PORT: 3001
+}));
 
 // Mock environment variables
-process.env.HUBSPOT_CLIENT_ID = 'test-client-id';
-process.env.HUBSPOT_CLIENT_SECRET = 'test-client-secret';
-process.env.HUBSPOT_SCOPE = 'test-scope';
-process.env.REDIRECT_URI = 'http://localhost:3000/oauth-callback';
+process.env.OAUTH_SERVICE_URL = 'http://oauth-service:3001';
 
 let server: Server;
 
-beforeAll((done) => {
+beforeAll(done => {
   const port = 3001;
-  server = app.listen(port, () => done());
+  server = app.listen(port, () => {
+    console.log(`Test server running on port ${port}`);
+    done();
+  });
 });
 
 afterAll((done) => {
-  server?.close(done);
-});
+  if (server) {
+    console.log('Closing test server...');
+    server.close((err?: Error) => {
+      if (err) {
+        console.error('Error closing test server:', err);
+      }
+      done();
+    });
+  } else {
+    done();
+  }
+}, 10000);
 
 describe('Express App', () => {
   beforeEach(() => {
@@ -68,19 +91,29 @@ describe('Express App', () => {
   describe('GET /contacts', () => {
     it('should return contacts successfully', async () => {
       const mockContacts = [
-        { id: 1, name: 'John Doe', email: 'john@example.com' },
-        { id: 2, name: 'Jane Doe', email: 'jane@example.com' }
+        { id: 1, first_name: 'John', last_name: 'Doe', email: 'john@example.com' },
+        { id: 2, first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com' }
       ];
-      (prisma.contacts.findMany as jest.MockedFunction<any>).mockResolvedValue(mockContacts);
+      (prisma.contacts.findMany as jest.MockedFunction<any>).mockResolvedValue(
+        mockContacts
+      );
 
-      const response = await request(server).get('/contacts').expect(200);
+      const response = await request(server)
+        .get('/contacts')
+        .expect(200);
+
       expect(response.body).toEqual(mockContacts);
     });
 
     it('should handle empty contact list', async () => {
-      (prisma.contacts.findMany as jest.MockedFunction<any>).mockResolvedValue([]);
+      (prisma.contacts.findMany as jest.MockedFunction<any>).mockResolvedValue(
+        []
+      );
 
-      const response = await request(server).get('/contacts').expect(200);
+      const response = await request(server)
+        .get('/contacts')
+        .expect(200);
+
       expect(response.body).toEqual([]);
     });
 
@@ -89,7 +122,10 @@ describe('Express App', () => {
         new Error('Database connection failed')
       );
 
-      const response = await request(server).get('/contacts').expect(500);
+      const response = await request(server)
+        .get('/contacts')
+        .expect(500);
+
       expect(response.body).toEqual({
         message: 'An error occurred while fetching contacts.'
       });
@@ -98,10 +134,20 @@ describe('Express App', () => {
 
   describe('GET /sync-contacts', () => {
     it('should sync contacts successfully', async () => {
-      const mockSyncResults = { success: true, synced: 10, failed: 0 };
-      (syncContactsToHubSpot as jest.MockedFunction<any>).mockResolvedValue(mockSyncResults);
+      const mockSyncResults = {
+        results: {
+          success: [{ id: 1, status: 'completed' }],
+          errors: []
+        }
+      };
+      (syncContactsToHubSpot as jest.MockedFunction<any>).mockResolvedValue(
+        mockSyncResults
+      );
 
-      const response = await request(server).get('/sync-contacts').expect(200);
+      const response = await request(server)
+        .get('/sync-contacts')
+        .expect(200);
+
       expect(response.body).toEqual(mockSyncResults);
     });
 
@@ -110,7 +156,10 @@ describe('Express App', () => {
         new Error('Sync failed')
       );
 
-      const response = await request(server).get('/sync-contacts').expect(500);
+      const response = await request(server)
+        .get('/sync-contacts')
+        .expect(500);
+
       expect(response.body).toEqual({
         message: 'An error occurred while syncing contacts.'
       });
@@ -118,40 +167,65 @@ describe('Express App', () => {
   });
 
   describe('GET /initial-contacts-sync', () => {
-    it('should perform initial sync successfully', async () => {
-      const mockSyncResults = { imported: 15, skipped: 2, errors: [] };
-      (initialContactsSync as jest.MockedFunction<any>).mockResolvedValue(mockSyncResults);
+    jest.setTimeout(10000);
 
-      const response = await request(server).get('/initial-contacts-sync').expect(200);
+    it('should perform initial sync successfully', async () => {
+      const mockSyncResults = {
+        total: 2,
+        results: {
+          upsert: { count: 1, records: [] },
+          created: { count: 1, records: [] },
+          failed: { count: 0, records: [] },
+          hsID_updated: { count: 0, records: [] },
+          errors: { count: 0, records: [] }
+        }
+      };
+      (initialContactsSync as jest.MockedFunction<any>).mockResolvedValue(
+        mockSyncResults
+      );
+
+      const response = await request(server)
+        .get('/initial-contacts-sync')
+        .expect(200);
+
       expect(response.body).toEqual(mockSyncResults);
     });
 
     it('should handle initial sync failures', async () => {
       (initialContactsSync as jest.MockedFunction<any>).mockRejectedValue(
-        new Error('Sync failed')
+        new Error('Initial sync failed')
       );
 
-      const response = await request(server).get('/initial-contacts-sync').expect(500);
+      const response = await request(server)
+        .get('/initial-contacts-sync')
+        .expect(500);
+
       expect(response.body).toEqual({
         message: 'An error occurred during the initial contacts sync.'
       });
     });
 
     it('should redirect to install page on 401 error', async () => {
-      const error = new Error('Unauthorized');
-      (error as any).code = 401;
+      const error = new Error('Unauthorized') as any;
+      error.code = 401;
       (initialContactsSync as jest.MockedFunction<any>).mockRejectedValue(error);
 
-      const response = await request(server).get('/initial-contacts-sync').expect(302);
-      expect(response.header.location).toBe('/api/install');
+      const response = await request(server)
+        .get('/initial-contacts-sync')
+        .expect(302);
+
+      expect(response.headers.location).toBe('http://localhost:3001/install');
     });
 
     it('should handle non-401 errors', async () => {
-      const error = new Error('Other error');
-      (error as any).code = 500;
+      const error = new Error('Some other error') as any;
+      error.code = 500;
       (initialContactsSync as jest.MockedFunction<any>).mockRejectedValue(error);
 
-      const response = await request(server).get('/initial-contacts-sync').expect(500);
+      const response = await request(server)
+        .get('/initial-contacts-sync')
+        .expect(500);
+
       expect(response.body).toEqual({
         message: 'An error occurred during the initial contacts sync.'
       });

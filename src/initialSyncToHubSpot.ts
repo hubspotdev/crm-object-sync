@@ -2,14 +2,11 @@ import 'dotenv/config';
 
 import { Contacts } from '@prisma/client';
 import { Client } from '@hubspot/api-client';
-<<<<<<< HEAD
 import { getAccessToken } from './auth';
-=======
-import { authenticateHubspotClient } from './auth';
->>>>>>> origin/main
 import {
   BatchReadInputSimplePublicObjectId,
   BatchResponseSimplePublicObjectStatusEnum,
+  SimplePublicObjectBatchInput,
   SimplePublicObjectInputForCreate,
   BatchResponseSimplePublicObjectWithErrors,
   BatchResponseSimplePublicObject,
@@ -17,10 +14,13 @@ import {
 } from '@hubspot/api-client/lib/codegen/crm/contacts';
 import { prisma, hubspotClient } from './clients';
 import { getCustomerId } from './utils/utils';
+import { logger } from './utils/logger';
 
 interface KeyedContacts extends Contacts {
   [key: string]: any;
 }
+
+const customerId = getCustomerId();
 
 const MAX_BATCH_SIZE = 100;
 
@@ -112,13 +112,49 @@ class BatchToBeSynced {
   }
 
   async batchRead() {
-    await authenticateHubspotClient();
     try {
+      logger.info({
+        type: 'HubSpot',
+        context: 'Batch Read',
+        logMessage: {
+          message: 'Starting batch read from HubSpot',
+          data: {
+            batchSize: this.cohortSize,
+            inputCount: this.#batchReadInputs.inputs.length
+          }
+        }
+      });
+
+      const accessToken = await getAccessToken(customerId);
+      this.hubspotClient.setAccessToken(accessToken);
+
       const response = await this.hubspotClient.crm.contacts.batchApi.read(
         this.#batchReadInputs
       );
       this.#batchReadOutput = response;
+
+      logger.info({
+        type: 'HubSpot',
+        context: 'Batch Read',
+        logMessage: {
+          message: 'Successfully completed batch read from HubSpot',
+          data: {
+            resultsCount: response.results.length
+          }
+        }
+      });
     } catch (error) {
+      logger.error({
+        type: 'HubSpot',
+        context: 'Batch Read',
+        logMessage: {
+          message: 'Failed to perform batch read from HubSpot',
+          stack: error instanceof Error ? error.stack : undefined,
+          data: {
+            batchSize: this.cohortSize
+          }
+        }
+      });
       if (error instanceof Error) {
         this.#batchReadError = error;
       }
@@ -140,59 +176,100 @@ class BatchToBeSynced {
   }
 
   async sendNetNewContactsToHubspot() {
-    const contactsToSendToHubSpot: SimplePublicObjectInputForCreate[] = [];
-    this.mapOfEmailsToNativeIds.forEach((nativeId, emailAddress) => {
-      const matchedContact = this.startingContacts.find(
-        (startingContact) => startingContact.email == emailAddress
-      );
-
-      const propertiesToSend = ['email', 'firstname', 'lastname']; // Make this a DB call to mapped Properties when combined with property mapping use case
-
-      if (!matchedContact) {
-        return false;
-      }
-      const createPropertiesSection = (
-        contact: KeyedContacts,
-        propertiesToSend: string[]
-      ): SimplePublicObjectInputForCreate['properties'] => {
-        const propertiesSection: SimplePublicObjectInputForCreate['properties'] =
-          {};
-        for (const property of propertiesToSend) {
-          contact[property]
-            ? (propertiesSection[property] = contact[property])
-            : null;
-        }
-        return propertiesSection;
-      };
-      const nonNullPropertiesToSend = createPropertiesSection(
-        matchedContact,
-        propertiesToSend
-      );
-      const formattedContact = {
-        associations: [],
-        properties: nonNullPropertiesToSend
-      };
-
-      contactsToSendToHubSpot.push(formattedContact);
-    });
-
     try {
+      const contactsToSendToHubSpot: SimplePublicObjectInputForCreate[] = [];
+      this.mapOfEmailsToNativeIds.forEach((nativeId, emailAddress) => {
+        const matchedContact = this.startingContacts.find(
+          (startingContact) => startingContact.email == emailAddress
+        );
+
+        const propertiesToSend = ['email', 'firstname', 'lastname']; // Make this a DB call to mapped Properties when combined with property mapping use case
+
+        if (!matchedContact) {
+          return false;
+        }
+        const createPropertiesSection = (
+          contact: KeyedContacts,
+          propertiesToSend: string[]
+        ): SimplePublicObjectInputForCreate['properties'] => {
+          const propertiesSection: SimplePublicObjectInputForCreate['properties'] =
+            {};
+          for (const property of propertiesToSend) {
+            contact[property]
+              ? (propertiesSection[property] = contact[property])
+              : null;
+          }
+          return propertiesSection;
+        };
+        const nonNullPropertiesToSend = createPropertiesSection(
+          matchedContact,
+          propertiesToSend
+        );
+        const formattedContact = {
+          associations: [],
+          properties: nonNullPropertiesToSend
+        };
+
+        contactsToSendToHubSpot.push(formattedContact);
+      });
+
+      logger.info({
+        type: 'HubSpot',
+        context: 'Batch Create',
+        logMessage: {
+          message: 'Starting batch create in HubSpot',
+          data: {
+            contactCount: contactsToSendToHubSpot.length
+          }
+        }
+      });
+
       const response = await this.hubspotClient.crm.contacts.batchApi.create({
         inputs: contactsToSendToHubSpot
       });
+
       if (
         response instanceof BatchResponseSimplePublicObjectWithErrors &&
         response.errors
       ) {
+        logger.warn({
+          type: 'HubSpot',
+          context: 'Batch Create',
+          logMessage: {
+            message: 'Batch create completed with some errors',
+            data: {
+              errors: response.errors
+            }
+          }
+        });
         if (Array.isArray(this.#syncErrors)) {
           this.#syncErrors.concat(response.errors);
         } else {
           this.#syncErrors = response.errors;
         }
+      } else {
+        logger.info({
+          type: 'HubSpot',
+          context: 'Batch Create',
+          logMessage: {
+            message: 'Successfully completed batch create in HubSpot',
+            data: {
+              createdCount: response.results.length
+            }
+          }
+        });
       }
       this.#batchCreateOutput = response;
       return response;
     } catch (error) {
+      logger.error({
+        type: 'HubSpot',
+        context: 'Batch Create',
+        logMessage: {
+          message: 'Failed to perform batch create in HubSpot',
+          stack: error instanceof Error ? error.stack : undefined
+        }
+      });
       if (error instanceof Error) {
         if (this.#saveErrors) {
           this.#saveErrors.push(error);
@@ -200,29 +277,61 @@ class BatchToBeSynced {
           this.#saveErrors = [error];
         }
       }
+      throw error;
     }
   }
 
   async saveHSContactIDToDatabase() {
-    const savedContacts = this.#batchCreateOutput.results.length
-      ? this.#batchCreateOutput.results
-      : this.#batchReadOutput.results;
-    for (const contact of savedContacts) {
-      try {
-        if (!contact.properties.email) {
-          throw new Error('Need an email address to save contacts');
-        }
-        await prisma.contacts.update({
-          where: {
-            email: contact.properties.email
-          },
+    try {
+      logger.info({
+        type: 'Database',
+        context: 'HubSpot ID Update',
+        logMessage: {
+          message: 'Starting to save HubSpot IDs to database',
           data: {
-            hs_object_id: contact.id
+            contactCount: this.#batchCreateOutput.results.length
           }
-        });
-      } catch (error) {
-        throw new Error('Encountered an issue saving a record to the database');
+        }
+      });
+
+      const savedContacts = this.#batchCreateOutput.results.length
+        ? this.#batchCreateOutput.results
+        : this.#batchReadOutput.results;
+      for (const contact of savedContacts) {
+        try {
+          if (!contact.properties.email) {
+            throw new Error('Need an email address to save contacts');
+          }
+          await prisma.contacts.update({
+            where: {
+              email: contact.properties.email
+            },
+            data: {
+              hs_object_id: contact.id
+            }
+          });
+        } catch (error) {
+          throw new Error('Encountered an issue saving a record to the database');
+        }
       }
+
+      logger.info({
+        type: 'Database',
+        context: 'HubSpot ID Update',
+        logMessage: {
+          message: 'Successfully saved HubSpot IDs to database'
+        }
+      });
+    } catch (error) {
+      logger.error({
+        type: 'Database',
+        context: 'HubSpot ID Update',
+        logMessage: {
+          message: 'Failed to save HubSpot IDs to database',
+          stack: error instanceof Error ? error.stack : undefined
+        }
+      });
+      throw error;
     }
   }
 
@@ -269,7 +378,7 @@ const syncContactsToHubSpot = async () => {
 
     if (syncCohort.mapOfEmailsToNativeIds.size === 0) {
       // take the next set of 100 contacts
-      console.log('all contacts were known, no need to create');
+      console.log('all contacts where known, no need to create');
     } else {
       await syncCohort.sendNetNewContactsToHubspot();
 

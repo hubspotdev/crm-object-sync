@@ -18,6 +18,14 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/contacts', async (req: Request, res: Response) => {
   try {
     const contacts = await prisma.contacts.findMany({});
+    logger.info({
+      type: 'Database',
+      context: 'Contacts Retrieval',
+      logMessage: {
+        message: 'Successfully retrieved contacts',
+        data: { count: contacts.length }
+      }
+    });
     res.send(contacts);
   } catch (error) {
     handleError(error, 'Error fetching contacts');
@@ -29,7 +37,22 @@ app.get('/contacts', async (req: Request, res: Response) => {
 
 app.get('/sync-contacts', async (req: Request, res: Response) => {
   try {
+    logger.info({
+      type: 'Sync',
+      context: 'Contact Sync to HubSpot',
+      logMessage: {
+        message: 'Starting contact sync to HubSpot'
+      }
+    });
     const syncResults = await syncContactsToHubSpot();
+    logger.info({
+      type: 'Sync',
+      context: 'Contact Sync to HubSpot',
+      logMessage: {
+        message: 'Successfully completed contact sync',
+        data: syncResults
+      }
+    });
     res.send(syncResults);
   } catch (error) {
     handleError(error, 'Error syncing contacts');
@@ -41,8 +64,8 @@ app.get('/sync-contacts', async (req: Request, res: Response) => {
 
 
 app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
-
   const useVerboseCreateOrUpdate = (req.query.verbose === 'true');
+
   logger.info({
     type: 'HubSpot',
     logMessage: {
@@ -58,10 +81,13 @@ app.get('/initial-contacts-sync', async (req: Request, res: Response) => {
       // Check if error is an API error with a code property
       // TODO move to middleware function so it doesn't have to be repeated for each endpoint
       if ((error as any).code == 401) {
-        logger.info({
+        logger.error({
           type: 'HubSpot',
+          context: 'Authentication',
           logMessage: {
-            message: 'Unauthorized error during initial contacts sync. Redirecting to install page.'
+            message: 'Unauthorized error during initial contacts sync',
+            code: '401',
+            statusCode: 401
           }
         });
         res.redirect("http://localhost:3001/install");
@@ -82,10 +108,23 @@ function startServer() {
   if (!server) {
     server = app.listen(PORT, function (err?: Error) {
       if (err) {
-        console.error('Error starting server:', err);
+        logger.error({
+          type: 'Server',
+          context: 'Startup',
+          logMessage: {
+            message: 'Error starting server',
+            stack: err.stack
+          }
+        });
         return;
       }
-      console.log(`App is listening on port ${PORT}`);
+      logger.info({
+        type: 'Server',
+        context: 'Startup',
+        logMessage: {
+          message: `App is listening on port ${PORT}`
+        }
+      });
     });
   }
   return server;

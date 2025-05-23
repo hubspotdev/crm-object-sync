@@ -90,25 +90,6 @@ export const apiEndpoints = {
       }
     }
   },
-  '/api/install': {
-    get: {
-      summary: 'Get HubSpot installation URL',
-      description:
-        'Returns an HTML page with the HubSpot OAuth installation link',
-      responses: {
-        '200': {
-          description: 'HTML page with installation link',
-          content: {
-            'text/html': {
-              schema: {
-                type: 'string'
-              }
-            }
-          }
-        }
-      }
-    }
-  },
   '/sync-contacts': {
     get: {
       summary: 'Sync contacts to HubSpot',
@@ -137,77 +118,7 @@ export const apiEndpoints = {
       }
     }
   },
-  '/': {
-    get: {
-      summary: 'Get access token',
-      description:
-        'Retrieves the HubSpot access token for the current customer',
-      responses: {
-        '200': {
-          description: 'Access token retrieved successfully',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'string'
-              }
-            }
-          }
-        },
-        '500': {
-          description: 'Server error',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error'
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  '/oauth-callback': {
-    get: {
-      summary: 'OAuth callback endpoint',
-      description: 'Handles the OAuth callback from HubSpot',
-      parameters: [
-        {
-          in: 'query',
-          name: 'code',
-          schema: {
-            type: 'string'
-          },
-          required: true,
-          description: 'OAuth authorization code'
-        }
-      ],
-      responses: {
-        '302': {
-          description: 'Redirect to home page after successful OAuth'
-        },
-        '400': {
-          description: 'Missing code parameter',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error'
-              }
-            }
-          }
-        },
-        '500': {
-          description: 'Server error',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error'
-              }
-            }
-          }
-        }
-      }
-    }
-  },
+
   '/initial-contacts-sync': {
     get: {
       summary: 'Initial contacts sync from HubSpot',
