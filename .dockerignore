@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Docker files
+Dockerfile*
+docker-compose*
+
+# Version control
+.git
+.gitignore
+
+# Environment
+.env
+*.env.docker
+
+# Test files
+*.test.js
+*.spec.js
+test/
+tests/
+
+# Documentation
+*.md
+docs/
+README*
+
+# IDE and system files
+.idea/
+.vscode/
+.DS_Store
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
+.next

@@ -7,7 +7,6 @@ node_modules/
 
 # Docker
 .docker/
-docker-compose.override.yml
 postgres_data/
 
 # Build & Logs

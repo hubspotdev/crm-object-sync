@@ -1,0 +1,19 @@
+services:
+  # Main application service for development
+  app:
+    build:
+      context: .                # Use current directory as build context
+      target: development       # Use the development stage from Dockerfile
+    command: npm run dev       # Run the development server with hot-reloading
+    volumes:
+      - .:/app                 # Mount current directory to /app for live code updates
+      - /app/node_modules      # Preserve container's node_modules (don't override with host)
+    environment:
+      NODE_ENV: development    # Set Node environment to development
+    restart: unless-stopped    # Restart container unless explicitly stopped
+
+  # Service to handle database migrations and Prisma client generation
+  prisma-migrate:
+    build:
+      target: development      # Use the development stage from Dockerfile
+    command: sh -c "npx prisma db push && npx prisma generate"  # Push schema and generate Prisma client

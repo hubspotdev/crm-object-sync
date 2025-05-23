@@ -44,12 +44,11 @@ This project demonstrates how to:
 
 1. Clone the repo
 
-2. If you haven't done so yet, please make sure to instal [Docker](https://www.docker.com/get-started/) on your local environment.
+2. If you haven't done so yet, please make sure to install [Docker](https://www.docker.com/get-started/) on your local environment.
 
 3. Create the .env file with these entries:
      - DATABASE_URL - PostgreSQL connection string
      - OAUTH_SERVICE_URL - URL of the external OAuth service
-     - SEED_DATABASE (Optional: set to true to seed the database)
 
 4. Ensure the [OAuth service](https://github.com/hubspotdev/oauth-service) is running and accessible. The OAuth service must have the following HubSpot scopes configured for this application to function properly:
 
@@ -63,12 +62,22 @@ This project demonstrates how to:
 - `crm.schemas.companies.write` - Create, delete, or make changes to property settings for companies
 - `oauth` - Basic scope required for OAuth. This scope is added by default to all apps
 
-
-4. Build and run the application:
+5. Build and run the application:
 ```bash
-# Start the application and database
-docker-compose up
+# For development:
+docker-compose up --build
+
+# For production:
+docker-compose -f docker-compose.yml up --build
 ```
+### Database Seeding
+
+If you want to seed the database with test data, you can run:
+```bash
+docker-compose exec app npm run db-seed
+```
+
+This will populate the database with 1000 sample contact records that you can use for testing the synchronization features.
 
 ## Endpoints:
 
