@@ -7,7 +7,7 @@ FROM node:20-bullseye-slim AS base
 WORKDIR /app
 
 # Install OpenSSL which is required for many Node.js applications
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl curl && rm -rf /var/lib/apt/lists/*
 
 # Copy package files first to leverage Docker layer caching
 # This means if package.json hasn't changed, we can reuse the cached node_modules
@@ -44,7 +44,7 @@ FROM node:20-bullseye-slim AS production
 WORKDIR /app
 
 # Install OpenSSL in production image
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl curl && rm -rf /var/lib/apt/lists/*
 
 # Copy only the necessary files from previous stages
 # This keeps the production image as small as possible

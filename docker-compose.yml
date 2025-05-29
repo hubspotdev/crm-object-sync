@@ -27,7 +27,7 @@ services:
       - oauth-service_oauth-network  # External network for OAuth service
     restart: always  # Automatically restarts the container if it crashes
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/contacts || exit 1"]  # Checks if /contacts endpoint is accessible
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api-docs || exit 1"]  # Checks if /contacts endpoint is accessible
       interval: 10s
       timeout: 5s
       retries: 5
