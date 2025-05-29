@@ -46,9 +46,12 @@ This project demonstrates how to:
 
 2. If you haven't done so yet, please make sure to install [Docker](https://www.docker.com/get-started/) on your local environment.
 
-3. Create the .env file with these entries:
-     - DATABASE_URL - PostgreSQL connection string
-     - OAUTH_SERVICE_URL - URL of the external OAuth service
+3. Create the .env file with these entries (see .env.example):
+   - DATABASE_URL - PostgreSQL connection string
+   - POSTGRES_USER - PostgreSQL username (default: postgres)
+   - POSTGRES_PASSWORD - PostgreSQL password (default: postgres)
+   - POSTGRES_DB - PostgreSQL database name (default: hubspot_sync)
+   - OAUTH_SERVICE_URL - URL of the external OAuth service
 
 4. Ensure the [OAuth service](https://github.com/hubspotdev/oauth-service) is running and accessible. The OAuth service must have the following HubSpot scopes configured for this application to function properly:
 
