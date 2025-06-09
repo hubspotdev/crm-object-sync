@@ -73,6 +73,35 @@ docker-compose up --build
 # For production:
 docker-compose -f docker-compose.yml up --build
 ```
+
+6. **Optional**: Starting both Oauth service and CRM object sync with one command:
+   
+```bash
+git clone --branch containerization https://github.com/hubspotdev/crm-object-sync.git && \
+git clone --branch containerization https://github.com/hubspotdev/oauth-service.git && \
+{ cat > oauth-service/.env <<EOF
+CLIENT_ID=YOUR_CLIENT_ID
+CLIENT_SECRET=YOUR_CLIENT_SECRET
+SCOPES=crm.objects.contacts.read crm.objects.contacts.write crm.objects.companies.read crm.objects.companies.write crm.schemas.contacts.read crm.schemas.contacts.write crm.schemas.companies.read crm.schemas.companies.write
+DATABASE_URL=postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@db:5432/YOUR_DB_NAME
+POSTGRES_USER=YOUR_DB_USER
+POSTGRES_PASSWORD=YOUR_DB_PASSWORD
+POSTGRES_DB=YOUR_DB_NAME
+EOF
+} && \
+{ cat > crm-object-sync/.env <<EOF
+POSTGRES_USER=YOUR_CRM_DB_USER
+POSTGRES_PASSWORD=YOUR_CRM_DB_PASSWORD
+POSTGRES_DB=YOUR_CRM_DB_NAME
+DATABASE_URL=postgresql://YOUR_CRM_DB_USER:YOUR_CRM_DB_PASSWORD@db:5432/YOUR_CRM_DB_NAME
+OAUTH_SERVICE_URL=http://oauth-service-app-1:3001
+EOF
+} && \
+(cd oauth-service && docker compose up -d) && \
+sleep 10 && \
+(cd crm-object-sync && docker compose down -v && rm -rf node_modules .prisma && docker compose up --build -d)
+```
+
 ### Database Seeding
 
 If you want to seed the database with test data, you can run:
@@ -105,7 +134,7 @@ This will populate the database with 1000 sample contact records that you can us
 
 All dependencies are automatically handled by Docker. However, for reference, here are the key packages used:
 
-### Core Dependencies
+### Core
 These are included in the Docker container:
 - `@hubspot/api-client` - HubSpot API integration
 - `@hubspot/cli-lib` - HubSpot CLI tools
@@ -116,7 +145,7 @@ These are included in the Docker container:
 - `axios` - HTTP client
 - `prompts` - CLI prompts
 
-### Development Dependencies
+### Development
 These are also included in the Docker environment:
 - `typescript` - Programming language
 - `jest` - Testing framework
