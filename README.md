@@ -26,7 +26,10 @@ This CRM Object Sync repository offers guidelines and practical examples to help
 
 This project demonstrates how to:
 
-- Use an external OAuth service for HubSpot authentication
+- Use an external OAuth service for HubSpot authentication:
+  - Integrates with the [HubSpot OAuth Service](https://github.com/hubspotdev/oauth-service/tree/containerization) for secure token management
+  - Handles OAuth 2.0 processes including initial installation and token refresh
+  - Stores OAuth refresh and access tokens in a dedicated PostgreSQL database
 - Create and manage a containerized PostgreSQL database with contact records
 - Sync data between HubSpot and PostgreSQL within a Docker environment:
 
@@ -46,26 +49,30 @@ This project demonstrates how to:
 
 2. If you haven't done so yet, please make sure to install [Docker](https://www.docker.com/get-started/) on your local environment.
 
-3. Create the .env file with these entries (see .env.example):
-   - DATABASE_URL - PostgreSQL connection string
-   - POSTGRES_USER - PostgreSQL username (default: postgres)
-   - POSTGRES_PASSWORD - PostgreSQL password (default: postgres)
-   - POSTGRES_DB - PostgreSQL database name (default: hubspot_sync)
-   - OAUTH_SERVICE_URL - URL of the external OAuth service
+3. Create two environment files (see .env.example and oauth-service.env.example):
 
-4. Ensure the [OAuth service](https://github.com/hubspotdev/oauth-service) is running and accessible. The OAuth service must have the following HubSpot scopes configured for this application to function properly:
+   a. `.env` file for the main application:
+   ```
+   DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=hubspot_sync
+   OAUTH_SERVICE_URL=http://oauth-service:3001
+   ```
 
-- `crm.objects.contacts.read` - View properties and other details about contacts
-- `crm.objects.contacts.write` - View properties and create, delete, and make changes to contacts
-- `crm.objects.companies.read` - View properties and other details about companies
-- `crm.objects.companies.write` - View properties and create, delete, or make changes to companies
-- `crm.schemas.contacts.read` - View details about property settings for contacts
-- `crm.schemas.contacts.write` - Create, delete, or make changes to property settings for contacts
-- `crm.schemas.companies.read` - View details about property settings for companies
-- `crm.schemas.companies.write` - Create, delete, or make changes to property settings for companies
-- `oauth` - Basic scope required for OAuth. This scope is added by default to all apps
+   b. `oauth-service.env` file for the OAuth service:
+   ```
+   CLIENT_ID=your_client_id
+   CLIENT_SECRET=your_client_secret
+   DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@oauth-db:5432/${POSTGRES_DB}
+   SCOPES=crm.objects.companies.read crm.objects.companies.write crm.objects.contacts.read crm.objects.contacts.write crm.objects.deals.read crm.objects.deals.write
 
-5. Build and run the application:
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=oauth_service
+   ```
+
+4. Build and run the application:
 ```bash
 # For development:
 docker-compose up --build
@@ -74,33 +81,11 @@ docker-compose up --build
 docker-compose -f docker-compose.yml up --build
 ```
 
-6. **Optional**: Starting both Oauth service and CRM object sync with one command:
-   
-```bash
-git clone --branch containerization https://github.com/hubspotdev/crm-object-sync.git && \
-git clone --branch containerization https://github.com/hubspotdev/oauth-service.git && \
-{ cat > oauth-service/.env <<EOF
-CLIENT_ID=YOUR_CLIENT_ID
-CLIENT_SECRET=YOUR_CLIENT_SECRET
-SCOPES=crm.objects.contacts.read crm.objects.contacts.write crm.objects.companies.read crm.objects.companies.write crm.schemas.contacts.read crm.schemas.contacts.write crm.schemas.companies.read crm.schemas.companies.write
-DATABASE_URL=postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@db:5432/YOUR_DB_NAME
-POSTGRES_USER=YOUR_DB_USER
-POSTGRES_PASSWORD=YOUR_DB_PASSWORD
-POSTGRES_DB=YOUR_DB_NAME
-EOF
-} && \
-{ cat > crm-object-sync/.env <<EOF
-POSTGRES_USER=YOUR_CRM_DB_USER
-POSTGRES_PASSWORD=YOUR_CRM_DB_PASSWORD
-POSTGRES_DB=YOUR_CRM_DB_NAME
-DATABASE_URL=postgresql://YOUR_CRM_DB_USER:YOUR_CRM_DB_PASSWORD@db:5432/YOUR_CRM_DB_NAME
-OAUTH_SERVICE_URL=http://oauth-service-app-1:3001
-EOF
-} && \
-(cd oauth-service && docker compose up -d) && \
-sleep 10 && \
-(cd crm-object-sync && docker compose down -v && rm -rf node_modules .prisma && docker compose up --build -d)
-```
+5. Initialize OAuth token:
+   - Visit `http://localhost:3001/install`
+   - Click the authorization link
+   - Complete the HubSpot OAuth flow
+   - A token will be stored with customerId="1"
 
 ### Database Seeding
 

@@ -1,39 +1,45 @@
-# Docker Compose configuration for CRM Object Sync Service
-# This file defines the production environment setup
-
+# Docker Compose version
 version: '3.8'
+
 services:
-  # Main application service
-  app:
-    build:
-      context: .
-      target: production  # Uses production target from Dockerfile
-    command: npm run start
+  # Main application database
+  # This is the primary PostgreSQL database for the CRM Object Sync application
+  db:
+    image: postgres:15
     ports:
-      - "3000:3000"  # Maps container port 3000 to host port 3000
-    env_file:
-      - .env  # Loads environment variables from .env file
+      - "5433:5432"  # Maps container port 5432 to host port 5433 to avoid conflicts
     environment:
-      NODE_ENV: production
-    depends_on:
-      db:
-        condition: service_healthy  # Waits for database to be ready
-      prisma-migrate:
-        condition: service_completed_successfully  # Waits for migrations to complete
-      oauth-check:
-        condition: service_healthy  # Waits for OAuth service to be ready
-    networks:
-      - default  # Internal network for app and database communication
-      - oauth-service_oauth-network  # External network for OAuth service
-    restart: always  # Automatically restarts the container if it crashes
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persists database data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api-docs || exit 1"]  # Checks if /contacts endpoint is accessible
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]  # Checks if database is ready
+      interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 20s
+    networks:
+      - default
 
-  # Database migration service - runs once before app starts
+  # OAuth service database
+  # Separate PostgreSQL database for the OAuth service to store tokens and auth data
+  oauth-db:
+    image: postgres:15
+    env_file:
+      - ./oauth-service.env  # Loads environment variables from oauth-service.env
+    volumes:
+      - oauth_postgres_data:/var/lib/postgresql/data  # Persists OAuth database data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OAUTH_POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+
+  # Main application's migration service
+  # Handles database migrations for the main application using Prisma
   prisma-migrate:
     build:
       context: .
@@ -43,51 +49,87 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_healthy  # Waits for database to be ready
+        condition: service_healthy  # Waits for main database to be healthy
     networks:
       - default
 
-  # OAuth service health check
-  oauth-check:
-    image: curlimages/curl:latest
-    command: sleep infinity  # Keeps container running for health checks
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f ${OAUTH_SERVICE_URL}/api/get-install-url"]  # Verifies OAuth service is accessible
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+  # OAuth service migration service
+  # Handles database migrations for the OAuth service
+  oauth-prisma-migrate:
+    build:
+      context: https://github.com/hubspotdev/oauth-service.git#containerization
+      target: production
+    command: npx prisma migrate deploy
+    env_file:
+      - ./oauth-service.env
+    depends_on:
+      oauth-db:
+        condition: service_healthy  # Waits for OAuth database to be healthy
+    networks:
+      - default
+
+  # Main application service
+  # The CRM Object Sync application
+  app:
+    build:
+      context: .
+      target: production
+    command: npm run start
+    ports:
+      - "3000:3000"  # Exposes the main application on port 3000
     env_file:
       - .env
-    networks:
-      - oauth-service_oauth-network
-
-  # PostgreSQL database service
-  db:
-    image: postgres:15
-    ports:
-      - "5433:5432"  # Maps container port 5432 to host port 5433
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data  # Persists database data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]  # Checks if database is accepting connections
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy  # Waits for main database
+      prisma-migrate:
+        condition: service_completed_successfully  # Waits for migrations
+      oauth-service:
+        condition: service_healthy  # Waits for OAuth service
     networks:
       - default
+    restart: always  # Automatically restarts if the service crashes
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api-docs || exit 1"]  # Checks if API is accessible
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s  # Gives the service time to start up
+
+  # OAuth service
+  # Handles HubSpot OAuth authentication and token management
+  oauth-service:
+    build:
+      context: https://github.com/hubspotdev/oauth-service.git#containerization
+    env_file:
+      - ./oauth-service.env
+    ports:
+      - "3001:3001"  # Exposes the OAuth service on port 3001
+    depends_on:
+      oauth-db:
+        condition: service_healthy  # Waits for OAuth database
+      oauth-prisma-migrate:
+        condition: service_completed_successfully  # Waits for OAuth migrations
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/get-install-url || exit 1"]  # Checks if OAuth service is ready
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: always
 
 # Volume definitions
+# These volumes persist data between container restarts
 volumes:
-  postgres_data:  # Named volume for database persistence
+  postgres_data:  # For main application database
+  oauth_postgres_data:  # For OAuth service database
 
-# Network definitions
+# Network configuration
+# Creates a bridge network for inter-service communication
 networks:
-  default:  # Internal network for service communication
+  default:
     driver: bridge
-  oauth-service_oauth-network:  # External network for OAuth service
-    external: true
